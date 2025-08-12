@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Repair360 - Multi-Service Repair and Maintenance Platform</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playwrite+IE+Guides&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+    *{
+            font-family: "Poppins", sans-serif;
+            
+            font-style: normal;
+        }
+       body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow-x: hidden; /* Only hide horizontal scroll */
+  overflow-y: auto;   /* Allow vertical scroll */
+  background-image: linear-gradient(to top, white 0%, #93c0ed 100%);
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+
+
+      .preloader {
+  font-family: 'Arial', sans-serif;
+  font-size: 4rem;
+  font-weight: bold;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #0aef3f;
+  border-radius: 10px;
+  box-shadow: 0px 0px 1000px red;
+  z-index: 9999;
+}
+
+
+    .preloader::after {
+      content: 'Repair - 360';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0%;
+      height: 100%;
+      overflow: hidden;
+      color: red; 
+      animation: fillText 3s ease-in-out forwards;
+      
+    }
+
+    @keyframes fillText {
+      from { width: 0%; }
+      to { width: 100%; }
+    }
+
+
+    .hidden {
+      display: none;
+    }
+    #content{
+        color: rgb(14, 13, 13);
+        
+       
+        border-radius: 15px;
+        
+    }
+    .container {
+  width: 90%;
+  max-width: 1200px;
+  
+  padding: 20px;
+}
+
+
+.container > div {
+  padding: 10px;
+}
+.container > div.header {
+  position: fixed; /* Make header fixed */
+  margin: auto;
+  width: 93%;
+  z-index: 1000;
+  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  padding: 0px 20px;
+  background-color: rgba(30, 26, 26, 0.13);
+  backdrop-filter: blur(7px);
+  border-radius: 50px;
+  box-shadow: 0px 0px 8px rgb(18, 17, 17);
+}
+
+.left-nav h2{
+    margin-top: 15px;
+}
+.left-nav{
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    text-align: center;
+}
+.left-nav img{
+    height: 70px;
+    width: 70px;
+}
+.container .header .right-nav ul{
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    list-style-type: none;
+    margin-top: 20px;
+}
+.container .header .right-nav li{
+    transition: all ease-in-out .3s;
+}
+.container .header .right-nav li:hover{
+    transform: translateY(-2px);
+}
+.container .header .right-nav ul a{
+    text-decoration: none;
+    color: rgb(14, 13, 13);
+}
+.container .header .right-nav ul a:hover{
+    color: white;
+}
+
+/*.container > div.menu {
+  grid-area: menu;
+}
+.container .menu h3{
+    margin-bottom: 50px;
+}
+.menu .button{
+    display: flex;
+    flex-direction: column;
+    width: min-content;
+    gap: 30px;
+    margin-left: 30px;
+}
+.menu a{
+    background-color: #04AA6D;
+    border: none;
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-weight: 500;
+    color: white;
+    box-shadow: 0px 0px 20px rgb(247, 164, 164);
+    transition: all ease .3s;
+    text-decoration: none;
+    text-align: center;
+}
+.menu a:hover{
+    transform: translateY(-5px);
+    cursor: pointer;
+    background-color: #a6f3d7;
+    color: black;
+} */
+.container > div.content {
+  grid-area: content;
+  display: flex;
+  flex-direction: column;
+  margin-top: 120px;
+  align-items: top;
+  gap: 20px;
+}
+.content .sub-content1{
+  display: flex;
+}
+.content .image{
+  height: fit-content;
+}
+.content .image img{
+    width: 280px;
+    transition: all ease-in-out .5s;
+    margin-top: 70px;
+    
+}
+
+.content .text{
+    
+    padding: 0px 20px;
+}
+
+.content .text p{
+    font-weight: 200;
+    letter-spacing: 1px;
+    
+}
+#re-name{
+    font-size: 30px;
+    text-transform: uppercase;
+}
+#moto{
+    font-size: 20px;
+    text-shadow: 0px 0px 5px red;
+}
+
+.content .image img:hover{
+    transform: translateX(10px);
+}
+.content .car{
+  background-image: url(img/car-=bg.png);
+  background-position: center;
+  background-attachment: fixed;
+  background-size: cover;
+  display: flex;
+  padding: 5px 30px;
+  width: 1150px;
+  border-radius: 30px;
+  box-shadow: 0px 0px 10px black;
+}
+.content .car .car-img img{
+  width: 350px;
+}
+.content .car .car-text p{
+  color: white;
+}
+.content .car .car-text a{
+  text-decoration: none;
+  text-align: center;
+  background-color: #0aef3f;
+  padding: 5px 15px;
+  color: black;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px black;
+  transition: all ease-in 0.2s;
+}
+.content .car .car-text a:hover{
+  background-color: #e79393;
+}
+.content .all{
+  background-image: url(img/car-=bg.png);
+  background-position: center;
+  background-attachment: fixed;
+  background-size: cover;
+  display: flex;
+  padding: 5px 30px;
+  width: 1150px;
+  border-radius: 30px;
+  box-shadow: 0px 0px 10px black;
+}
+.content .all .all-text p{
+  color: white;
+}
+.content .all .all-img img{
+  width: 350px;
+}
+.content .all .all-text a{
+  text-decoration: none;
+  text-align: center;
+  background-color: #0aef3f;
+  padding: 5px 15px;
+  color: black;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px black;
+  transition: all ease-in 0.2s;
+}
+.content .all .all-text a:hover{
+  background-color: #e79393;
+}
+.content .car-me{
+  background-image: url(img/car-me.jpg);
+  background-position: center;
+  background-attachment: fixed;
+  background-size: cover;
+  display: flex;
+  padding: 5px 30px;
+  width: 1150px;
+  border-radius: 30px;
+  box-shadow: 0px 0px 10px black;
+}
+
+.content .car-me .car-me-img img{
+  width: 350px;
+}
+.content .car-me .car-me-text a{
+  text-decoration: none;
+  text-align: center;
+  background-color: #0aef3f;
+  padding: 5px 15px;
+  color: black;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px black;
+  transition: all ease-in 0.2s;
+}
+.content .car-me .car-me-text a:hover{
+  background-color: #e79393;
+}
+.container > div.footer {
+  width: 105%;
+  border-left: 1px solid black;
+  border-right: 1px solid black;
+  box-shadow: 0px 3px 10px black;
+  margin-left: 5px;
+}
+.footer .details{
+  display: flex;
+  gap: 270px;
+}
+.footer .details .quick-links a{
+  text-decoration: none;
+  color: black;
+  
+}
+.footer .details .quick-links a:hover{
+  color: #0a5aef;
+}
+.footer .details .quick-links li{
+  transition: all ease .3s;
+  padding: 5px;
+}
+.footer .details .quick-links li:hover{
+  color: #0a5aef;
+  transform: translateY(-1px);
+}
+.footer .details .social-media{
+  margin-top: 50px;
+}
+.footer .details .social-media .link a{
+  padding: 30px;
+  
+}
+.footer .details .social-media .link img{
+  width: 36px;
+  transition: all ease .3s;
+}
+.footer .details .social-media .link img:hover{
+  transform: translateY(-3px);
+}
+.footer .details .social-media .contact{
+  margin-top: 20px;
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+.footer .details .social-media .contact p{
+  display: flex;
+  align-items: center;
+  text-align: center;
+  gap: 5px;
+}
+  </style>
+</head>
+<body>
+
+  <div class="preloader" id="preloader">Repair - 360</div>
+
+  <div id="content" style="display: none; width: 100%;">
+    <div class="container">
+        <div class="header">
+            <div class="left-nav">
+                <img src="img/repairlogo.png" alt="">
+                <h2>Repair360</h2>
+            </div>
+            <div class="right-nav">
+                <ul>
+                    <li><div class="dropdown">
+                      <button class="dropbtn">Login As <i class="fa-solid fa-caret-down"></i></button>
+                      <div class="dropdown-content">
+                        <a href="/admin/login-admin.html">Admin</a>
+                        <a href="/customer/customer-login.html">Customer</a>
+                        <a href="/service-provider/mechanic_login.html">Mechanic</a>
+                      </div>
+                    </div></li>
+                    <li><div class="dropdown">
+                      <button class="dropbtn">SignUp As <i class="fa-solid fa-caret-down"></i></button>
+                      <div class="dropdown-content">
+                        <a href="/admin/reg-admin.html">Admin</a>
+                        <a href="/customer/customer-signup.html">Customer</a>
+                        <a href="#">Mechanic</a>
+                      </div>
+                    </div></li>
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="about.html">About Us</a></li>
+                </ul>
+            </div>
+        </div>
+         <!--  <div class="menu">
+            <h3>Login As</h3>
+            <div class="button">
+                <a href="admin/login-admin.html">Admin</a>
+                <a href="customer/customer-login.html">Customer</a>
+                <a href="service-provider/mechanic_login.html">Mechanic</a>
+            </div>
+        </div> -->
+        <div class="content">
+          <div class="sub-content1">
+            <div class="text">
+              <p>
+                  <strong id="re-name">Welcome to Repair - 360</strong> <br><br>- the ultimate destination for all your repair needs. We specialize in servicing a wide range of household appliances including refrigerators, TVs, air conditioners, fans, and washing machines. Need vehicle repairs too?<br><br> No problem. Our expert team ensures quick, high-quality service at your doorstep. Trust Repair - 360 for dependable, professional solutions - <strong id="moto">anytime, anywhere.</strong>
+                </p>
+                              
+          </div>
+          <div class="image">
+            <img src="img/mechanic.png" alt="">
+        </div>
+          </div>
+          <div class="sub-content2">
+            <h1>Our Services <i class="fa-solid fa-screwdriver-wrench"></i></h1>
+                <div class="car">
+                  <div class="car-text">
+                    <p>
+                      <strong>
+                        At Repair360, your car is in expert hands.
+                      </strong> <br><br>
+                      Whether it's engine trouble, brake issues, battery replacement, or regular servicing — we provide fast, reliable, and affordable car repair solutions.
+                      Our experienced mechanics are ready to diagnose and fix your vehicle with precision and care.
+                      Stay safe on the road — trust Repair360 for professional automotive repair services anytime, anywhere!
+                    </p><br><br>
+                    <a href="/customer/customer-login.html">Book Now</a>
+                  </div>
+                  <div class="car-img">
+                    <img src="img/car-re.png" alt="">
+                  </div>
+                </div> 
+          </div>
+          <div class="sub-content2">
+                <div class="all">
+                  <div class="all-text">
+                    <p>
+                      <strong>
+                        One-stop solution for all your home appliance repairs!
+                      </strong><br><br>
+                      From refrigerators that won't cool, TVs that won't turn on, noisy fans, faulty washing machines, to air conditioners that need servicing — Repair360 has you covered.
+                      Our team of certified technicians brings fast, reliable, and affordable repair services right to your doorstep. <br><br>
+                      <strong>Enjoy hassle-free service and extend the life of your appliances with Repair360!</strong>
+                    </p><br><br>
+                    <a href="/customer/customer-login.html">Book Now</a>
+                  </div>
+                  <div class="all-img">
+                    <img src="img/all.png" alt="">
+                  </div>
+                </div> 
+          </div>
+          <div class="sub-content3">
+            <div class="car-me">
+              <div class="car-me-text">
+                <p>
+                  <strong>Easily book top-rated mechanics at the best rates No matter what kind of repair help you need, </strong> <br> <br>
+                  — car, appliances, or home services — get instant quotes from trusted local experts through the professionals at Repair360. <br><br>
+
+                  ✔️ Simple, upfront pricing. <br>
+                  ✔️ Excellent customer support. <br>
+                  ✔️ Guaranteed professional service.
+                </p><br><br>
+                <a href="/customer/customer-login.html">Hire Now !</a>
+              </div>
+              <div class="car-me-img">
+                <img src="img/booking.png" alt="">
+              </div>
+            </div> 
+      </div>
+            
+        </div>
+        <div class="footer">
+          <div class="details">
+            <div class="quick-links">
+              <h3>Quick Links</h3>
+              <ul>
+                <li><a href="about.html">About Us</a></li>
+                <li><a href="#">Help Center</a></li>
+                <li><a href="#">Developers</a></li>
+              </ul>
+            </div>
+            <div class="social-media">
+              <div class="link">
+                <a href="#"><img src="img/fb.png" alt=""></a>
+              <a href="#"><img src="img/insta.png" alt=""></a>
+              <a href="#"><img src="img/twitter.png" alt=""></a>
+              <a href="#"><img src="img/in.png" alt=""></a>
+              </div>
+              <div class="contact">
+               <p><img src="img/call.png" alt=""> +8801727743670</p>
+               <p><img src="img/gmail.png" alt="">shafinrubaer@gmail.com</p>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="copyright">
+            <footer style=" color: #0f0f0f; text-align: center; padding: 15px 0; width: 100%; bottom: 0; font-family: Arial, sans-serif; font-size: 14px;">
+              &copy; 2025 Repair - 360. All rights reserved.
+            </footer>
+          </div>
+            
+        </div>
+      </div>
+  </div>
+
+  <script>
+    setTimeout(function () {
+      document.getElementById('preloader').classList.add('hidden');
+      document.getElementById('content').style.display = 'block';
+    }, 4200);
+  </script>
+  <style>
+    .dropbtn {
+  background-color: transparent;
+  color: rgb(12, 12, 12);
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: rgba(30, 26, 26, 0.13);
+  backdrop-filter: blur(7px);
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgb(16, 16, 16);
+  z-index: 1;
+  border-radius: 10px;
+}
+
+.dropdown-content a {
+  color: rgb(16, 16, 16);
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  text-align: start;
+}
+
+.dropdown-content a:hover {
+  background-color: rgba(28, 26, 26, 0.13);
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.dropdown:hover .dropbtn {
+  color: white;
+}
+  </style>
+</body>
+</html>

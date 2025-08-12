@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Customer Sign-Up</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: url('https://cdn.pixabay.com/photo/2017/04/07/00/40/tools-2209756_1280.jpg') no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 15px;
+    }
+
+    .form-container {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 25px;
+      max-width: 900px;
+      width: 100%;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      color: #000;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.8em;
+      font-weight: 800;
+      margin-bottom: 20px;
+      color: #000;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      font-weight: bold;
+      margin-bottom: 6px;
+      font-size: 0.95rem;
+    }
+
+    input, select, textarea {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      background-color: rgba(255, 255, 255, 0.95);
+      font-size: 1rem;
+    }
+
+    #customer-id {
+      background-color: #eee;
+      font-weight: bold;
+      color: #555;
+      pointer-events: none;
+    }
+
+    .gender-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .password-container {
+      display: flex;
+    }
+    .password-container input {
+      flex: 1;
+    }
+    .password-container button {
+      margin-left: 10px;
+      padding: 0 12px;
+      border: none;
+      background-color: #888;
+      color: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    /* Email + OTP button inline */
+    .email-container {
+      display: flex;
+      gap: 8px;
+    }
+    .email-container input {
+      flex: 1;
+    }
+    .email-container button {
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0 12px;
+      cursor: pointer;
+    }
+    .email-container button:hover {
+      opacity: 0.9;
+    }
+
+    .button-container {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      margin-top: 15px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .button-container button {
+      flex: 1;
+      padding: 12px;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      border: none;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .button-container button[type="reset"] {
+      background-color: #dc3545;
+    }
+    .button-container button[type="submit"] {
+      background-color: #28a745;
+    }
+    .button-container button:hover {
+      opacity: 0.9;
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .email-container {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h1>Customer Sign-Up</h1>
+    <form id="signupForm">
+      <div class="form-group">
+        <label for="customer-id">Customer ID</label>
+        <input type="text" id="customer-id" name="customer-id" readonly placeholder="Auto-generated ID">
+      </div>
+
+      <div class="form-group">
+        <label for="full-name">Full Name</label>
+        <input type="text" id="full-name" name="full-name" placeholder="Enter your full name" required>
+      </div>
+
+      <div class="form-group">
+        <label for="nid">NID</label>
+        <input type="number" id="nid" name="nid" placeholder="Enter your NID no." required>
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="password-container">
+          <input type="password" id="password" name="password" placeholder="Create a password" required>
+          <button type="button" id="togglePassword">Show</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="dob">Date of Birth</label>
+        <input type="date" id="dob" name="dob" required>
+      </div>
+
+      <div class="form-group">
+        <label>Gender</label>
+        <div class="gender-options">
+          <label><input type="radio" name="gender" value="Male" checked> Male</label>
+          <label><input type="radio" name="gender" value="Female"> Female</label>
+          <label><input type="radio" name="gender" value="Other"> Other</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="division">Division</label>
+        <select id="division" name="division" required>
+          <option>Select Division</option>
+          <option value="">Dhaka</option>
+          <option>Chittagong</option>
+          <option>Barisal</option>
+          <option>Khulna</option>
+          <option>Rajshahi</option>
+          <option>Sylhet</option>
+          <option>Rangpur</option>
+          <option>Mymensingh</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="address">Address</label>
+        <textarea id="address" name="address" rows="3" placeholder="Enter your full address" required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Phone No.</label>
+        <input type="tel" id="phone" name="phone" placeholder="e.g. 01234567890" required>
+      </div>
+
+      <div class="form-group">
+        <label for="city">City</label>
+        <input type="text" id="city" name="city" placeholder="Enter your city" required>
+      </div>
+
+      <div class="form-group">
+        <label for="pin-code">Postal Code</label>
+        <input type="text" id="pin-code" name="pin-code" placeholder="e.g. 1207" required>
+      </div>
+
+      <!-- Email + Send OTP -->
+      <div class="form-group">
+        <label for="email">Email</label>
+        <div class="email-container">
+          <input type="email" id="email" name="email" placeholder="example@domain.com" required>
+          <button type="button" id="sendOtpBtn">Send OTP</button>
+        </div>
+      </div>
+
+      <!-- OTP Input (hidden initially) -->
+      <div class="form-group" id="otpGroup" style="display: none;">
+        <label for="otpInput">Enter OTP</label>
+        <input type="number" id="otpInput" placeholder="Enter OTP" required>
+        <small id="otpMessage" style="color:red;"></small>
+      </div>
+
+      <div class="button-container">
+        <button type="reset">Reset</button>
+        <button type="submit">Submit</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    let generatedOTP = null;
+
+    // Generate Customer ID
+    document.addEventListener('DOMContentLoaded', function () {
+      let counter = Math.floor(Math.random() * 9999) + 1;
+      document.getElementById('customer-id').value = '221' + String(counter).padStart(4, '0');
+      counter = null;
+    });
+
+    // Toggle password
+    document.getElementById('togglePassword').addEventListener('click', function () {
+      const pass = document.getElementById('password');
+      const type = pass.type === 'password' ? 'text' : 'password';
+      pass.type = type;
+      this.textContent = type === 'password' ? 'Show' : 'Hide';
+    });
+
+    // Send OTP
+    document.getElementById('sendOtpBtn').addEventListener('click', function () {
+      const email = document.getElementById('email').value;
+      if (!email) {
+        alert('Please enter your email first.');
+        return;
+      }
+      generatedOTP = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
+      alert('Your OTP is: ' + generatedOTP); // In real app, send via email
+      document.getElementById('otpGroup').style.display = 'block';
+    });
+
+    // OTP verification on form submit
+    document.getElementById('signupForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const enteredOTP = document.getElementById('otpInput').value;
+      if (generatedOTP && parseInt(enteredOTP) === generatedOTP) {
+        alert('OTP verified! Form submitted.');
+        this.submit(); // proceed with form
+      } else {
+        document.getElementById('otpMessage').textContent = 'Invalid OTP.Please try again.';
+      }
+    });
+  </script>
+</body>
+</html>
