@@ -8,7 +8,7 @@
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
-      background: url('pexels-shvetsa-4312849.jpg') no-repeat center center fixed;
+      background: url('img/LS.jpeg') no-repeat center center fixed;
       background-size: cover;
     }
 
@@ -16,10 +16,10 @@
       background-color: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(15px);
       border-radius: 20px;
-      padding: 40px;
+      padding: 30px;
       max-width: 900px;
-      margin: 50px auto;
-      color: #000;
+      margin: 30px auto;
+      color: white;
       display: flex;
       flex-wrap: wrap;
       gap: 30px;
@@ -64,10 +64,28 @@
     .full-width {
       flex: 1 1 100%;
     }
+    .email-container {
+      display: flex;
+      gap: 8px;
+    }
+    .email-container input {
+      flex: 1;
+    }
+    .email-container button {
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0 12px;
+      cursor: pointer;
+    }
+    .email-container button:hover {
+      opacity: 0.9;
+    }
 
     .button-group {
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       gap: 20px;
       width: 100%;
       margin-top: 20px;
@@ -80,15 +98,22 @@
       border: none;
       cursor: pointer;
     }
+    
 
     #submit {
       background-color: #28a745;
       color: white;
     }
+    #submit:hover{
+      background-color: #5fdf7d;
+    }
 
     #reset {
       background-color: #ddd;
       color: black;
+    }
+    #reset:hover{
+      background-color: #a0aaa2;
     }
 
     .password-wrapper {
@@ -103,7 +128,7 @@
   </style>
 </head>
 <body>
-  <form class="form-container" onsubmit="generateMechanicID(event)">
+  <form class="form-container">
     <h2>Mechanic Sign Up</h2>
 
     <div class="form-group">
@@ -117,9 +142,19 @@
     </div>
 
     <div class="form-group">
-      <label>Email:</label>
-      <input type="email" name="email" placeholder="Enter Your Email" required />
-    </div>
+        <label for="email">Email</label>
+        <div class="email-container">
+          <input type="email" id="email" name="email" placeholder="example@domain.com" required>
+          <button type="button" id="sendOtpBtn">Send OTP</button>
+        </div>
+      </div>
+
+      <!-- OTP Input (hidden initially) -->
+      <div class="form-group" id="otpGroup" style="display: none;">
+        <label for="otpInput">Enter OTP</label>
+        <input type="number" id="otpInput" placeholder="Enter OTP" required>
+        <small id="otpMessage" style="color:red;"></small>
+      </div>
 
     <div class="form-group">
       <label>Password:</label>
@@ -140,9 +175,14 @@
     </div>
 
     <div class="form-group">
+        <label for="nid">NID</label>
+        <input type="number" id="nid" name="nid" placeholder="Enter your NID no." required>
+      </div>
+
+    <div class="form-group">
       <label>Gender:</label>
       <div class="gender-group">
-        <label><input type="radio" name="gender" value="Male" required /> Male</label>
+        <label><input type="radio" name="gender" value="Male" checked /> Male</label>
         <label><input type="radio" name="gender" value="Female" /> Female</label>
         <label><input type="radio" name="gender" value="Another" /> Another</label>
       </div>
@@ -162,6 +202,11 @@
         <option value="Mymensingh">Mymensingh</option>
       </select>
     </div>
+
+    <div class="form-group">
+        <label for="city">City</label>
+        <input type="text" id="city" name="city" placeholder="Enter your city" required>
+      </div>
 
     <div class="form-group">
       <label>Type of Mechanic:</label>
@@ -190,19 +235,39 @@
   </form>
 
   <script>
-    function generateMechanicID(event) {
-      event.preventDefault();
-      const idField = document.getElementById('mechanicid');
-      if (!idField.value) {
-        idField.value = 'MECH' + Date.now();
-      }
-      alert('Mechanic ID generated: ' + idField.value);
-    }
+    document.addEventListener('DOMContentLoaded', function () {
+      let counter = Math.floor(Math.random() * 9999) + 1;
+      document.getElementById('mechanicid').value = '2500' + String(counter).padStart(4, '0');
+      counter = null;
+    });
 
     function togglePassword() {
       const pwd = document.getElementById("password");
       pwd.type = pwd.type === "password" ? "text" : "password";
     }
+
+     document.getElementById('sendOtpBtn').addEventListener('click', function () {
+      const email = document.getElementById('email').value;
+      if (!email) {
+        alert('Please enter your email first.');
+        return;
+      }
+      generatedOTP = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
+      alert('Your OTP is: ' + generatedOTP); // In real app, send via email
+      document.getElementById('otpGroup').style.display = 'block';
+    });
+
+    // OTP verification on form submit
+    document.getElementById('signupForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const enteredOTP = document.getElementById('otpInput').value;
+      if (generatedOTP && parseInt(enteredOTP) === generatedOTP) {
+        alert('OTP verified! Form submitted.');
+        this.submit(); // proceed with form
+      } else {
+        document.getElementById('otpMessage').textContent = 'Invalid OTP.Please try again.';
+      }
+    });
   </script>
 </body>
 </html>
