@@ -129,6 +129,7 @@
     }
   </style>
 </head>
+
 <body>
   <form class="form-container" method="POST" >
     <h2>Mechanic Sign Up</h2>
@@ -279,17 +280,19 @@ $(document).ready(function () {
         });
     });
 
+    
     // ---------- 4. Form Submission ----------
     $('#submit').click(function (e) {
         e.preventDefault();
 
+        
         const enteredOTP = $('#otpInput').val().trim();
         if (!enteredOTP) {
           Swal.fire({
                             icon: "error",
                             title: "Oops...",
                             text: "Please verify your email before proceeding!!",
-                            footer: 'NID already exists!!'
+                            footer: 'Not Verified Email'
                             });
             $('#otpMessage').text('Please verify your email before proceeding!!');
             return;
@@ -300,17 +303,14 @@ $(document).ready(function () {
                             icon: "error",
                             title: "Oops...",
                             text: "Invalid OTP. Please try again.",
-                            footer: 'NID already exists!!'
+                            footer: 'Wrong OTP'
                             });
             $('#otpMessage').text('Invalid OTP. Please try again.');
             return;
         }
 
         // Check form validity
-        if (!this.form.checkValidity()) {
-            Swal.fire({ icon: "error", title: "Error", text: "Please fill all required fields." });
-            return;
-        }
+        
 
         // Age validation
         const dob = new Date($('#dob').val());
@@ -318,8 +318,8 @@ $(document).ready(function () {
         let age = today.getFullYear() - dob.getFullYear();
         const monthDiff = today.getMonth() - dob.getMonth();
         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) age--;
-        if (age < 16) {
-            Swal.fire({ icon: "error", title: "Oops...", text: "You must be at least 16 years old to register." });
+        if (age < 18) {
+            Swal.fire({ icon: "error", title: "Oops...", text: "You must be at least 18 years old to register." });
             return;
         }
 
@@ -337,6 +337,10 @@ $(document).ready(function () {
                 var type = $('#mechanicType').val();
                 var gender= $('input[name="gender"]:checked').val()
                 var nid = $('#nid').val();
+                if (!this.form.checkValidity()) {
+            Swal.fire({ icon: "error", title: "Error", text: "Please fill all required fields." });
+            return;
+        }
 
 				$.ajax({
 					type: 'POST',

@@ -14,7 +14,7 @@
         body{
             display: flex;
             justify-content: center;
-            background: url(img/regbg.jpg);
+            background: url(img/admin/regbg.jpg);
             background-size: cover;
             background-position: center;
             transform: translateY(20px);
@@ -26,7 +26,7 @@
             display: flex;
             justify-content: space-between;
             padding: 0px 100px;
-            color: black;
+            color: white;
             gap: 70px;
             backdrop-filter: blur(10px);
             border-radius: 10px;
@@ -46,7 +46,7 @@
         }
         
         .container1{
-            padding-bottom: 70px;
+            padding-bottom: 25px;
         }
         .container2{
             margin-top: 90px;
@@ -83,7 +83,7 @@
     </style>
 </head>
 <body>
-    <form method="POST" >
+    <form method="POST" action="signup.php">
         
             <div class="container1">
                 <h1>Admin Sign Up</h1>
@@ -91,10 +91,15 @@
          <label for="B">Job ID:<br></label><input type="number" id="jobid" name="jobid" size="20"placeholder="Enter Your Job ID" required><br><br>
          <label for="C">Email:<br></label><input type="email"  id="email"size="20" name="email" placeholder="Enter Your Email" required><br><br>
           <label for="D">Password:<br></label><input type="password" id="password" name="password" size="20" placeholder="Enter Password" required><br><br>
-          <button type="button" id="eye" onclick="togglePassword()"><img src="img/eye.png" alt=""></button>
+          <button type="button" id="eye" onclick="togglePassword()"><img src="img/admin/eye.png" alt=""></button>
         <label for="E">Date of Birth:<br></label><input type ="date"id="date" name="date" size= "20" placeholder="Enter Date of Birth" required><br><br>
-        
-        
+        <select id="security" name="security" required>
+            <option value="" disabled selected>(Please select a security Question)</option>
+            <option value="What is your pet name?">What is your pet name?</option>
+            <option value="What is your father name?">What is your father name?</option>
+            <option value="What is your favourite sports?">What is your favourite sport?</option>
+        </select><br>
+        <input type="text" id="answer" name="answer" placeholder=" Security Answer" required>
             </div>
             <div class="container2">
                 Gender:<br>

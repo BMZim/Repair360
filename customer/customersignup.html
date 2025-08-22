@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Customer Sign-Up</title>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     body {
       margin: 0;
@@ -241,22 +243,25 @@
 
       <div class="button-container">
         <button type="reset">Reset</button>
-        <button type="submit">Submit</button>
+        <button type="submit" value="submit" id="submit" name="submit">Submit</button>
       </div>
     </form>
   </div>
 
-  <script>
-    let generatedOTP = null;
+  <script src="https://smtpjs.com/v3/smtp.js"></script>
 
+  <script>
     // Generate Customer ID
     document.addEventListener('DOMContentLoaded', function () {
       let counter = Math.floor(Math.random() * 9999) + 1;
-      document.getElementById('customer-id').value = '25' + String(counter).padStart(4, '0');
+      document.getElementById('customer-id').value = '221' + String(counter).padStart(4, '0');
       counter = null;
     });
 
-    // Toggle password
+    $(document).ready(function () {
+
+
+   // Toggle password
     document.getElementById('togglePassword').addEventListener('click', function () {
       const pass = document.getElementById('password');
       const type = pass.type === 'password' ? 'text' : 'password';
@@ -264,29 +269,155 @@
       this.textContent = type === 'password' ? 'Show' : 'Hide';
     });
 
-    // Send OTP
-    document.getElementById('sendOtpBtn').addEventListener('click', function () {
-      const email = document.getElementById('email').value;
-      if (!email) {
-        alert('Please enter your email first.');
-        return;
-      }
-      generatedOTP = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
-      alert('Your OTP is: ' + generatedOTP); // In real app, send via email
-      document.getElementById('otpGroup').style.display = 'block';
-    });
+    // ---------- 3. OTP Sending ----------
+    let generatedOTP = null;
 
-    // OTP verification on form submit
-    document.getElementById('signupForm').addEventListener('submit', function (e) {
-      e.preventDefault();
-      const enteredOTP = document.getElementById('otpInput').value;
-      if (generatedOTP && parseInt(enteredOTP) === generatedOTP) {
-        alert('OTP verified! Form submitted.');
-        this.submit(); // proceed with form
-      } else {
-        document.getElementById('otpMessage').textContent = 'Invalid OTP.Please try again.';
-      }
+    $('#sendOtpBtn').click(function () {
+        const email = $('#email').val().trim();
+        if (!email) {
+            Swal.fire({ icon: "error", title: "Error", text: "Please enter your email first!" });
+            return;
+        }
+
+        generatedOTP = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
+        $('#otpGroup').show();
+
+        // Send email using SMTPJS
+        Email.send({
+            SecureToken: "1586ed89-b601-4653-bfcf-7c021b711518",
+            To: email,
+            From: "shafinrubaer@gmail.com",
+            Subject: "Email Verification",
+            Body: "Your OTP is: " + generatedOTP
+        }).then(message => {
+            if (message === "OK") {
+                Swal.fire({ title: "OTP Sent!", text: "Check your email inbox.", icon: "success", timer: 1500 });
+            } else {
+                Swal.fire({ icon: "error", title: "Error", text: "Failed to send OTP. Try again." });
+            }
+        });
     });
+     
+
+    // ---------- 4. Form Submission ----------
+    $('#submit').click(function (e) {
+        e.preventDefault();
+
+
+        const enteredOTP = $('#otpInput').val().trim();
+        if (!enteredOTP) {
+          Swal.fire({
+                            icon: "error",
+                            title: "Oops...",
+                            text: "Please verify your email before proceeding!!",
+                            footer: 'Not Verified Email'
+                            });
+            $('#otpMessage').text('Please verify your email before proceeding!!');
+            return;
+        }
+
+        if (!generatedOTP || parseInt(enteredOTP) !== generatedOTP) {
+            Swal.fire({
+                            icon: "error",
+                            title: "Oops...",
+                            text: "Invalid OTP. Please try again.",
+                            footer: 'Wrong OTP'
+                            });
+            $('#otpMessage').text('Invalid OTP. Please try again.');
+            return;
+        }
+
+       
+        
+
+        // Age validation
+        const dob = new Date($('#dob').val());
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const monthDiff = today.getMonth() - dob.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) age--;
+        if (age < 16) {
+            Swal.fire({ icon: "error", title: "Oops...", text: "You must be at least 16 years old to register." });
+            return;
+        }
+
+        // Collect form data
+                var cusid = $('#customer-id').val();
+                var fname = $('#full-name').val();
+                var email = $('#email').val();
+                var phone= $('input[name="phone"]').val().trim();
+                var password = $('#password').val();
+                var address = $('#address').val();
+                var date = $('#dob').val();
+                var pin = $('#pin-code').val();
+                var city = $('#city').val();
+                var division= $('select[name="division"]').val();
+                var gender= $('input[name="gender"]:checked').val()
+                var nid = $('#nid').val();
+
+                if (!this.form.checkValidity()) {
+            Swal.fire({ icon: "error", title: "Error", text: "Please fill all required fields." });
+            return;
+        }
+    
+
+				$.ajax({
+					type: 'POST',
+					url: 'customersignup.php',
+					data: {
+                            fname: fname,
+                            cusid: cusid,
+                            email: email,
+                            phone: phone,
+                            password: password,
+                            address: address,
+                            date: date,
+                            pin: pin,
+                            city: city,
+                            division: division,
+                            gender: gender,
+                            nid: nid,
+                },
+					success: function(data){
+
+                        if(data.trim() ==  "0"){
+                            Swal.fire({
+                                title: "Good job!",
+                                text: "SignUp Successfull",
+                                icon: "success"
+                                }).then(()=>{
+                                    window.location.href="customer-login.php";
+                                });
+                        }else if(data.trim() ==  "1"){  
+                            Swal.fire({
+                            icon: "error",
+                            title: "Oops...",
+                            text: "Something went wrong!",
+                            footer: 'Email already exists!!'
+                            });
+                        }else if(data.trim() ==  "2"){
+                            Swal.fire({
+                            icon: "error",
+                            title: "Oops...",
+                            text: "Something went wrong!",
+                            footer: 'NID already exists!!'
+                            });
+                        }else{
+                            alert(data);
+                            Swal.fire({
+                            icon: "error",
+                            title: "Oops...",
+                            text: "Something went wrong!",
+                            footer: 'Contact with support center'
+                            });
+                        }
+                        
+							
+					}
+				});
+    });
+});
+    
   </script>
 </body>
 </html>
