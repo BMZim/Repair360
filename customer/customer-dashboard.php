@@ -60,65 +60,93 @@ if($valid == true){
         </div>
         <div class="booking-content">
             <div class="service-cards">
-                <!-- Service Card 1 -->
-                <div class="service-card">
-                    <div class="card-header">
-                        <div class="avatar"><img src="img/re.png" alt=""></div>
-                        <div>
-                            <div class="name">GearUp Mechanics <span class="stars">★★★★★</span></div>
-                            <div class="category">Car Mechanic</div>
-                        </div>
-                    </div>
-                    <div class="expertise">
-                        <strong>Expert At:</strong>
-                        <ul>
-                            <li>Engine Specialist</li>
-                            <li>Transmission Technician</li>
-                            <li>Brake and Suspension Expert</li>
-                            <li>Electrical System Technician</li>
-                            <li>Air Conditioning and Heating Specialist</li>
-                        </ul>
-                    </div>
-                    <div class="hire">
-                        <button class="hire-btn">Hire Now</button>
-                        <button class="hire-btn">Location</button>
-                    </div>
-                    
-                    <div class="footer">
-                        <img src="img/repairlogo.png" alt="Repair360"/>
-                        Expert Mechanics by Repair360
-                    </div>
+<?php
+include("db.php");
+
+$sql = "SELECT 
+            m.mechanic_id,
+            m.full_name,
+            m.avatar,
+            s.shop_name, 
+            s.skills,
+            s.expert_area,
+            s.shop_location,
+            COALESCE(AVG(r.rating), 0) AS avg_rating
+        FROM service s
+        JOIN mechanic m ON s.mechanic_id = m.mechanic_id
+        LEFT JOIN mechanic_rating r ON m.mechanic_id = r.mechanic_id
+        GROUP BY m.mechanic_id, s.service_id";
+
+$result = $conn->query($sql);
+
+if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        // Convert comma-separated string into array
+        $skillsArray = explode(",", $row['skills']); 
+        $expertArray = explode(",", $row['expert_area']); 
+
+        // Handle shop location safely
+        $latitude = $longitude = null;
+        if (!empty($row['shop_location']) && strpos($row['shop_location'], ',') !== false) {
+            list($latitude, $longitude) = explode(',', $row['shop_location']);
+            $latitude = trim($latitude);
+            $longitude = trim($longitude);
+        }
+        ?>
+        
+        <div class="service-card">
+            <div class="card-header">
+                <div class="avatar">
+                    <img src="uploads/<?= htmlspecialchars($row['avatar']); ?>" alt="avatar">
                 </div>
-                <!-- Service Card 2 -->
-                <div class="service-card">
-                    <div class="card-header">
-                        <div class="avatar"><img src="img/re.png" alt=""></div>
-                        <div>
-                            <div class="name">FridgeMedix <span class="stars">★★★★★</span></div>
-                            <div class="category">Refrigerator Mechanic</div>
-                        </div>
+                <div>
+                    <div class="name">
+                        <?= htmlspecialchars($row['shop_name']); ?>
+                        <span class="stars">
+                            <?= str_repeat("★", round($row['avg_rating'])); ?>
+                        </span>
                     </div>
-                    <div class="expertise">
-                        <strong>Expert At:</strong>
-                        <ul>
-                            <li>Certified Refrigerator Technician</li>
-                            <li>Cooling System Specialist</li>
-                            <li>Refrigeration Appliance Expert</li>
-                            <li>Fridge Repair Engineer</li>
-                            <li>Domestic Refrigeration Mechanic</li>
-                        </ul>
-                    </div>
-                    <div class="hire">
-                        <button class="hire-btn">Hire Now</button>
-                        <button class="hire-btn">Location</button>
-                    </div>
-                    
-                    <div class="footer">
-                        <img src="img/repairlogo.png" alt="Repair360" />
-                        Expert Mechanic by Repair360
-                    </div>
+                    <div class="category"><?= htmlspecialchars($row['skills']); ?></div>
                 </div>
             </div>
+
+            <div class="expertise">
+                <strong>Expert At:</strong>
+                <ul>
+                    <?php foreach ($expertArray as $expert): ?>
+                        <li><?= htmlspecialchars(trim($expert)); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            
+            <div class="hire">
+                <button class="hire-btn">Hire Now</button>
+                <?php if ($latitude && $longitude): ?>
+                    <button class="hire-btn" onclick="showLocation(<?= $latitude ?>, <?= $longitude ?>)">Location</button>
+                <?php endif; ?>
+            </div>
+            
+            <div class="footer">
+                <img src="img/repairlogo.png" alt="Repair360"/>
+                Expert Mechanics by Repair360
+            </div>
+        </div>
+
+        <?php
+    }
+} else {
+    echo "<p>No services available right now.</p>";
+}
+?>
+</div>
+
+<script>
+function showLocation(lat, lng) {
+    window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+}
+</script>
+
+
            
           
             </div>
