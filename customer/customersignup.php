@@ -32,7 +32,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }else if($rows = mysqli_num_rows($result1)>0){
         echo "2";
     }else{
-        $stmt = $conn->prepare("INSERT INTO customers (customers_id, full_name, nid, password, dob, gender, division, address, phone, city, postal_code, email, is_verified) 
+        $stmt = $conn->prepare("INSERT INTO customers (customer_id, full_name, nid, password, dob, gender, division, address, phone, city, postal_code, email, is_verified) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
         $stmt->bind_param("sssssssssssss", 

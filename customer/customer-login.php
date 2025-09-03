@@ -6,7 +6,7 @@ if (isset($_POST['submit'])) {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    $stmt = $conn->prepare("SELECT customers_id, full_name, email, phone, password FROM customers WHERE email=? OR phone=? LIMIT 1");
+    $stmt = $conn->prepare("SELECT customer_id, full_name, email, phone, password FROM customers WHERE email=? OR phone=? LIMIT 1");
     $stmt->bind_param("ss", $email, $email);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -16,7 +16,7 @@ if (isset($_POST['submit'])) {
 
         // Password verify
         if (password_verify($password, $user['password'])) {
-            $_SESSION['customers_id'] = $user['customers_id'];
+            $_SESSION['customer_id'] = $user['customer_id'];
             $_SESSION['full_name'] = $user['full_name'];
             $_SESSION['email'] = $user['email'];
 

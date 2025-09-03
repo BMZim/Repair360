@@ -1,6 +1,6 @@
 <?php 
 session_start();
-$valid =$_SESSION['customers_id'];
+$valid =$_SESSION['customer_id'];
 if($valid == true){
 
 }else{
@@ -64,6 +64,7 @@ if($valid == true){
 include("db.php");
 
 $sql = "SELECT 
+            s.service_id,
             m.mechanic_id,
             m.full_name,
             m.avatar,
@@ -76,6 +77,7 @@ $sql = "SELECT
         JOIN mechanic m ON s.mechanic_id = m.mechanic_id
         LEFT JOIN mechanic_rating r ON m.mechanic_id = r.mechanic_id
         GROUP BY m.mechanic_id, s.service_id";
+
 
 $result = $conn->query($sql);
 
@@ -120,7 +122,7 @@ if ($result->num_rows > 0) {
             </div>
             
             <div class="hire">
-                <button class="hire-btn">Hire Now</button>
+                <button class="hire-btn" onclick="openBookingModal('<?= $row['mechanic_id'] ?>', '<?= $row['service_id'] ?? '' ?>')">Hire Now</button>
                 <?php if ($latitude && $longitude): ?>
                     <button class="hire-btn" onclick="showLocation(<?= $latitude ?>, <?= $longitude ?>)">Location</button>
                 <?php endif; ?>
@@ -140,15 +142,83 @@ if ($result->num_rows > 0) {
 ?>
 </div>
 
+<!-- Booking Modal -->
+<div id="bookingModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <h2>Book Appointment</h2>
+    <form id="bookingForm" method="POST" action="save_appointment.php">
+      <input type="hidden" name="mechanic_id" id="mechanic_id">
+      <input type="hidden" name="service_id" id="service_id">
+      
+      <label>Select Date:</label>
+      <input type="date" name="appointment_date" required>
+      
+      <label>Select Time:</label>
+      <input type="time" name="appointment_time" required><br>
+      
+      <button type="submit" class="confirm-btn">Confirm Booking</button>
+    </form>
+  </div>
+</div>
+
+<style>
+.modal {
+  display: none; 
+  position: fixed; 
+  z-index: 1000; 
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+}
+.modal-content {
+  background: white;
+  padding: 20px;
+  width: 400px;
+  margin: 10% auto;
+  border-radius: 10px;
+}
+#bookingForm{
+  display: flex;
+  flex-direction: column;
+}
+.close {
+  float: right;
+  font-size: 22px;
+  cursor: pointer;
+}
+.confirm-btn {
+  background: #28a745; 
+  color: white; 
+  padding: 10px 15px;
+  border: none; border-radius: 5px;
+  cursor: pointer;
+}
+.confirm-btn:hover { background: #218838; }
+</style>
+<script>
+function openBookingModal(mechanicId, serviceId) {
+    document.getElementById("bookingModal").style.display = "block";
+    document.getElementById("mechanic_id").value = mechanicId;
+    document.getElementById("service_id").value = serviceId;
+}
+function closeModal() {
+    document.getElementById("bookingModal").style.display = "none";
+}
+
+// Close when clicking outside
+window.onclick = function(event) {
+  if (event.target.classList.contains('modal')) {
+    closeModal();
+  }
+}
+</script>
+
 <script>
 function showLocation(lat, lng) {
     window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
 }
-</script>
-
-
-           
-          
+</script>    
             </div>
         </div>
       <div class="tabPanel" id="tab2">
@@ -156,34 +226,50 @@ function showLocation(lat, lng) {
           <h2>Appointments Details</h2>
         </div>
         <div class="appointment-content">
-               <table class="appointments-table"> 
-                <thead> 
-                  <tr> 
-                    <th>Service</th> 
-                    <th>Date</th> 
-                    <th>Time</th> 
-                    <th>Status</th>
-                   </tr> 
-                  </thead> 
-                  <tbody> 
-                    <tr> 
-                      <td>Refrigerator Repair</td> 
-                      <td>2025-07-20</td> 
-                      <td>10:30 AM</td> 
-                      <td class="status confirmed">Confirmed</td> 
-                    </tr> <tr> <td>AC Maintenance</td> 
-                      <td>2025-07-22</td> <td>02:00 PM</td> 
-                      <td class="status pending">Pending</td> 
-                    </tr> 
-                    <tr> 
-                      <td>Smart TV Diagnosis</td> 
-                      <td>2025-07-25</td> 
-                      <td>04:15 PM</td> 
-                      <td class="status completed">Completed</td> 
-                    </tr> 
-                  </tbody> 
-                </table>
-        </div>
+    <table class="appointments-table">
+        <thead>
+            <tr>
+                <th>Service</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            include("db.php");
+            
+            $customer_id = $_SESSION['customer_id']; // Assuming logged-in customer
+
+            $sql = "SELECT a.appointment_id, s.skills AS service_name, 
+                           a.appointment_date, a.appointment_time, a.status
+                    FROM appointments a
+                    JOIN service s ON a.service_id = s.service_id
+                    WHERE a.customer_id = ?";
+            
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("s", $customer_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            if ($result->num_rows > 0) {
+                while ($row = $result->fetch_assoc()) {
+                    $statusClass = strtolower($row['status']); // e.g. confirmed, pending
+                    echo "<tr>
+                            <td>" . htmlspecialchars($row['service_name']) . "</td>
+                            <td>" . htmlspecialchars($row['appointment_date']) . "</td>
+                            <td>" . date("h:i A", strtotime($row['appointment_time'])) . "</td>
+                            <td class='status {$statusClass}'>" . htmlspecialchars($row['status']) . "</td>
+                          </tr>";
+                }
+            } else {
+                echo "<tr><td colspan='4'>No Appointments Found</td></tr>";
+            }
+            ?>
+        </tbody>
+    </table>
+</div>
+
         
       </div>
       <div class="tabPanel">
