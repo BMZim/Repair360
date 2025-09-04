@@ -286,6 +286,10 @@ color: #856404;
 background-color: #d4edda;
 color: #155724;
 }
+.item3 .status.cancelled {
+background-color: #f0acac;
+color: #d61010;
+}
 .item3 .track-service-content{
   display: flex;
 }

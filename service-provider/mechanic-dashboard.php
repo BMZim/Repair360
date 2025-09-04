@@ -63,71 +63,126 @@ if($valid == true){
             
         </div>
         <div class="job-content">
-          <div class="job-card">
-      <h3>Refrigerator Repair</h3>
-      <p><strong>Customer:</strong> Mr. Arif Rahman</p>
-      <p><strong>Address:</strong> House 12, Road 5, Dhanmondi, Dhaka</p>
-      <p><strong>Date & Time:</strong> 20 July 2025, 11:00 AM</p>
-      <p><strong>Description:</strong> Fridge not cooling properly</p>
-      <div class="action-buttons">
-        <button class="accept-btn">Accept</button>
-        <button class="decline-btn">Decline</button>
-      </div>
-    </div>
+<?php
+include("connection.php");
 
-    <div class="job-card">
-      <h3>AC Maintenance</h3>
-      <p><strong>Customer:</strong> Ms. Nusrat Jahan</p>
-      <p><strong>Address:</strong> Bashundhara R/A, Block C, Dhaka</p>
-      <p><strong>Date & Time:</strong> 21 July 2025, 3:00 PM</p>
-      <p><strong>Description:</strong> Annual AC service requested</p>
-      <div class="action-buttons">
-        <button class="accept-btn">Accept</button>
-        <button class="decline-btn">Decline</button>
-      </div>
-    </div>
+
+$mechanic_id = $_SESSION['id']; // Logged-in mechanic
+
+$sql = "SELECT 
+            a.appointment_id,
+            a.appointment_date,
+            a.appointment_time,
+            a.description,
+            c.full_name AS customer_name,
+            c.address AS customer_address,
+            s.shop_name AS service_name
+        FROM appointments a
+        JOIN customers c ON a.customer_id = c.customer_id
+        JOIN service s ON a.service_id = s.service_id
+        WHERE a.mechanic_id = ? AND a.status = 'Pending'
+        ORDER BY a.appointment_date, a.appointment_time ASC";
+
+
+$stmt = $con->prepare($sql);
+$stmt->bind_param("s", $mechanic_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $dateTime = date("d M Y, h:i A", strtotime($row['appointment_date']." ".$row['appointment_time']));
+        ?>
+        <div class="job-card">
+            <h3><?= htmlspecialchars($row['service_name']); ?></h3>
+            <p><strong>Customer:</strong> <?= htmlspecialchars($row['customer_name']); ?></p>
+            <p><strong>Address:</strong> <?= htmlspecialchars($row['customer_address']); ?></p>
+            <p><strong>Date & Time:</strong> <?= $dateTime; ?></p>
+            <p><strong>Description:</strong> <?= htmlspecialchars($row['description']); ?></p>
+            <div class="action-buttons">
+                <form method="post" action="update_appointments.php" style="display:inline;">
+                    <input type="hidden" name="appointment_id" value="<?= $row['appointment_id']; ?>">
+                    <input type="hidden" name="status" value="Confirmed">
+                    <button type="submit" class="accept-btn">Accept</button>
+                </form>
+                <form method="post" action="update_appointments.php" style="display:inline;">
+                    <input type="hidden" name="appointment_id" value="<?= $row['appointment_id']; ?>">
+                    <input type="hidden" name="status" value="Cancelled">
+                    <button type="submit" class="decline-btn">Decline</button>
+                </form>
+            </div>
         </div>
+        <?php
+    }
+} else {
+    echo "<p>No jobs assigned yet.</p>";
+}
+?>
+</div>
+
+
+
       </div>
       <div class="tabPanel" id="tab2">
         <div class="appointment-head">
           <h2>Appointments Details</h2>
         </div>
+        
+
         <div class="appointment-content">
-          <table class="schedule-table">
-      <thead>
-        <tr>
-          <th>Service</th>
-          <th>Date</th>
-          <th>Time</th>
-          <th>Customer</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>AC Maintenance</td>
-          <td>2025-07-21</td>
-          <td>03:00 PM</td>
-          <td>Nusrat Jahan</td>
-          <td class="status confirmed">Confirmed</td>
-        </tr>
-        <tr>
-          <td>Fridge Repair</td>
-          <td>2025-07-22</td>
-          <td>10:00 AM</td>
-          <td>Tanvir Alam</td>
-          <td class="status pending">Pending</td>
-        </tr>
-        <tr>
-          <td>TV Wall Mount</td>
-          <td>2025-07-23</td>
-          <td>01:00 PM</td>
-          <td>Raihan Islam</td>
-          <td class="status completed">Completed</td>
-        </tr>
-      </tbody>
-    </table>
-        </div>
+  <table class="schedule-table">
+    <thead>
+      <tr>
+        <th>Service</th>
+        <th>Date</th>
+        <th>Time</th>
+        <th>Customer</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <?php
+      include("connection.php");
+      $mechanic_id = $_SESSION['id']; // logged in mechanic id
+
+      $sql = "SELECT 
+                  s.skills AS service_name,
+                  a.appointment_date,
+                  a.appointment_time,
+                  a.status,
+                  c.full_name AS customer_name
+              FROM appointments a
+              JOIN service s ON a.service_id = s.service_id
+              JOIN customers c ON a.customer_id = c.customer_id
+              WHERE a.mechanic_id = ?
+              ORDER BY a.appointment_date ASC, a.appointment_time ASC";
+
+      $stmt = $con->prepare($sql);
+      $stmt->bind_param("s", $mechanic_id);
+      $stmt->execute();
+      $result = $stmt->get_result();
+
+      if ($result->num_rows > 0) {
+          while ($row = $result->fetch_assoc()) {
+              $date = date("Y-m-d", strtotime($row['appointment_date']));
+              $time = date("h:i A", strtotime($row['appointment_time']));
+              $statusClass = strtolower($row['status']); // e.g. confirmed, pending, completed
+
+              echo "<tr>
+                      <td>" . htmlspecialchars($row['service_name']) . "</td>
+                      <td>" . $date . "</td>
+                      <td>" . $time . "</td>
+                      <td>" . htmlspecialchars($row['customer_name']) . "</td>
+                      <td class='status {$statusClass}'>" . htmlspecialchars($row['status']) . "</td>
+                    </tr>";
+          }
+      } else {
+          echo "<tr><td colspan='5'>No Appointments Found</td></tr>";
+      }
+      ?>
+    </tbody>
+  </table>
+</div>
         
       </div>
 

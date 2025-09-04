@@ -6,16 +6,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $customer_id = $_SESSION['customer_id']; // logged in customer
     $mechanic_id = $_POST['mechanic_id'];
     $service_id = $_POST['service_id'];
+    $description = $_POST['description'];
     $appointment_date = date('Y-m-d', strtotime($_POST['appointment_date'])); // DATE format
     $appointment_time = date('H:i:s', strtotime($_POST['appointment_time'])); // TIME format
 
     $status = "Pending"; // default
 
-    $sql = "INSERT INTO appointments (customer_id, mechanic_id, service_id, appointment_date, appointment_time, status)
-            VALUES (?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO appointments (customer_id, mechanic_id, service_id, appointment_date, appointment_time, status, description)
+            VALUES (?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssisss", $customer_id, $mechanic_id, $service_id, $appointment_date, $appointment_time, $status);
+    $stmt->bind_param("ssissss", $customer_id, $mechanic_id, $service_id, $appointment_date, $appointment_time, $status, $description);
 
     if ($stmt->execute()) {
         echo "<script>alert('Appointment booked successfully!'); window.location='customer-dashboard.php';</script>";

@@ -152,10 +152,13 @@ if ($result->num_rows > 0) {
       <input type="hidden" name="service_id" id="service_id">
       
       <label>Select Date:</label>
-      <input type="date" name="appointment_date" required>
+      <input type="date" name="appointment_date" required><br>
       
       <label>Select Time:</label>
       <input type="time" name="appointment_time" required><br>
+
+      <label>Description:</label>
+      <input type="text" name="description" placeholder="write a short description about your problem" required><br>
       
       <button type="submit" class="confirm-btn">Confirm Booking</button>
     </form>

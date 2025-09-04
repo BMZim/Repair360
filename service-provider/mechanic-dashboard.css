@@ -246,6 +246,10 @@
   background-color: #d4edda;
   color: #155724;
 }
+.item3 .appointment-content .status.cancelled {
+background-color: #f0acac;
+color: #d61010;
+}
 
 .item3 .track-service-content  {
   max-width: 900px;
