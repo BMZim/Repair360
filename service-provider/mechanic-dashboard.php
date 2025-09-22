@@ -15,7 +15,6 @@ if($valid == true){
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <script src="map.js" defer></script>
-  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap" async defer></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
   
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -42,13 +41,14 @@ if($valid == true){
         <button onclick="showPanel(0, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-screwdriver-wrench"></i> Assigned Jobs</button>
         <button onclick="showPanel(1, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-calendar-check"></i> My Schedule</button>
         <button onclick="showPanel(2, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-check-to-slot"></i> Job History</button>
-        <button onclick="showPanel(3, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-route"></i> Route & Map</button>
-        <button onclick="showPanel(4, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-message"></i> Messages</button>
-        <button onclick="showPanel(5, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-money-bill"></i> Earnings & Payments</button>
-        <button onclick="showPanel(6, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-gears"></i> My Profile</button>
-        <button onclick="showPanel(7, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-star"></i> Ratings & Reviews</button>
-        <button onclick="showPanel(8, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-gear"></i> Service Settings</button>
-        <button onclick="showPanel(9, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-truck"></i> Emergency Services</button>
+        <button onclick="showPanel(3, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-check-to-slot"></i> Track service Confirmation</button>
+        <button onclick="showPanel(4, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-route"></i> Route & Map</button>
+        <button onclick="showPanel(5, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-message"></i> Messages</button>
+        <button onclick="showPanel(6, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-money-bill"></i> Earnings & Payments</button>
+        <button onclick="showPanel(7, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-gears"></i> My Profile</button>
+        <button onclick="showPanel(8, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-star"></i> Ratings & Reviews</button>
+        <button onclick="showPanel(9, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-gear"></i> Service Settings</button>
+        <button onclick="showPanel(10, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-truck"></i> Emergency Services</button>
         <button onclick="logOut()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
       </div>
   
@@ -182,8 +182,7 @@ if ($result->num_rows > 0) {
       ?>
     </tbody>
   </table>
-</div>
-        
+</div> 
       </div>
 
       <div class="tabPanel" id="tab3">
@@ -225,10 +224,264 @@ if ($result->num_rows > 0) {
         </tr>
       </tbody>
     </table>
-          
         </div>
       </div>
+
       <div class="tabPanel" id="tab4">
+        <div class="job-details-head">
+          <h2>Customer Confirmation</h2>
+        </div>
+        <div class="job-details-content">
+      <?php
+include("connection.php");
+
+$mechanic_id = $_SESSION['id'];
+
+$sql = "SELECT 
+            a.appointment_id,
+            a.appointment_date,
+            a.appointment_time,
+            a.description,
+            c.full_name AS customer_name,
+            c.address,
+            s.shop_name AS service_name,
+            ts.status AS track_status
+        FROM appointments a
+        JOIN customers c ON a.customer_id = c.customer_id
+        JOIN service s ON a.service_id = s.service_id
+        LEFT JOIN track_status ts ON a.appointment_id = ts.appointment_id
+        WHERE a.mechanic_id = ? AND a.status = 'Confirmed'
+        ORDER BY a.appointment_date, a.appointment_time ASC";
+
+$stmt = $con->prepare($sql);
+$stmt->bind_param("s", $mechanic_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        ?>
+        <div class="job-card">
+            <h3><?= htmlspecialchars($row['service_name']); ?></h3>
+            <p><strong>Customer:</strong> <?= htmlspecialchars($row['customer_name']); ?></p>
+            <p><strong>Address:</strong> <?= htmlspecialchars($row['address']); ?></p>
+            <p><strong>Date & Time:</strong> <?= date("d M Y, h:i A", strtotime($row['appointment_date']." ".$row['appointment_time'])); ?></p>
+            <p><strong>Description:</strong> <?= htmlspecialchars($row['description']); ?></p>
+            
+            <!-- Tracking form -->
+           <form method="post" 
+      style="border:1px solid #ccc; padding:15px; border-radius:8px; background:#f9f9f9; margin-top:15px; width:100%; max-width:420px; font-family:Arial, sans-serif;">
+    <input type="hidden" id="appointment_id" name="appointment_id" value="<?= $row['appointment_id']; ?>">
+    <input type="hidden" id="mechanic_id" name="mechanic_id" value="<?= $mechanic_id; ?>">
+
+    <?php if ($row['track_status'] == "" || $row['track_status'] == "Pending") { ?>
+        <label style="display:block; margin-bottom:6px; font-weight:bold; color:#333;">Estimated Arrival Time:</label>
+        <input type="datetime-local" id="estimated_arrival" name="estimated_arrival" required 
+               style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ccc; border-radius:4px;">
+
+        <label style="display:block; margin-bottom:6px; font-weight:bold; color:#333;">Current Status:</label>
+        <input type="text" id="current_status" name="current_status" placeholder="e.g. Traffic delay, leaving now" required
+               style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ccc; border-radius:4px;">
+
+        <button id="way" type="submit" name="action" value="On the Way" 
+                style="width:100%; padding:10px; border:none; border-radius:4px; background-color:#38a169; color:white; font-weight:bold; cursor:pointer; transition:all 0.3s ease;">
+            On The Way
+        </button>
+    <?php } elseif ($row['track_status'] == "On the Way") { ?>
+        <button id="started" type="submit" name="action" value="Work Started" 
+                style="width:100%; padding:10px; border:none; border-radius:4px; background-color:#f6ad55; color:white; font-weight:bold; cursor:pointer; transition:all 0.3s ease;">
+            Work Started
+        </button>
+    <?php } elseif ($row['track_status'] == "Work Started") { ?>
+        <button id="complete" type="submit" name="action" value="Completed" 
+                style="width:100%; padding:10px; border:none; border-radius:4px; background-color:#3182ce; color:white; font-weight:bold; cursor:pointer; transition:all 0.3s ease;">
+            Completed
+        </button>
+    <?php } ?>
+
+    <style>
+        button[name="action"][value="On the Way"]:hover {
+            background-color: #2f855a; 
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(56, 161, 105, 0.5);
+        }
+        button[name="action"][value="Work Started"]:hover {
+            background-color: #dd6b20;
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(214, 125, 50, 0.5);
+        }
+        button[name="action"][value="Completed"]:hover {
+            background-color: #2b6cb0;
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(49, 130, 206, 0.5);
+        }
+    </style>
+</form>
+
+
+            <script>
+                $(document).ready(function () {
+    function OnTheWay() {
+
+        var appointment_id = $('#appointment_id').val();
+        var mechanic_id = $('#mechanic_id').val();
+        var estimated_arrival = $('#estimated_arrival').val();
+        var current_status = $('#current_status').val();
+        var status = "On the Way";
+
+        if (estimated_arrival &&  current_status  !== "") {
+                        $.ajax({
+                            url: "update_track_status.php",
+                            method: "POST",
+                            data: { appointment_id: appointment_id,
+                                    mechanic_id: mechanic_id,
+                                    estimated_arrival: estimated_arrival,
+                                    current_status: current_status,
+                                    status: status,
+                             },
+                            success: function(data) {
+                              if(data.trim() ==  "Done"){
+                                Swal.fire({
+                                title: "Nice!",
+                                text: "You are on Track!!",
+                                icon: "success"
+                                });
+                              }else{
+                                alert(data);
+                                Swal.fire({
+                                title: "Opps!!",
+                                text: "Error occured",
+                                icon: "error"
+                                });
+                              }
+                              
+                           
+                }
+            });
+        } else {
+            Swal.fire({
+                                title: "Opps!!",
+                                text: "Fill all fields!!",
+                                icon: "error"
+                                });
+        }
+    }
+
+
+    $("#way").on("click", function (e) {
+        e.preventDefault(); // Prevent form submission
+        OnTheWay();
+    });
+});
+
+$(document).ready(function () {
+    function Started() {
+
+        var appointment_id = $('#appointment_id').val();
+        var mechanic_id = $('#mechanic_id').val();
+        var estimated_arrival = $('#estimated_arrival').val();
+        var current_status = $('#current_status').val();
+        var status = "Work Started";
+
+                        $.ajax({
+                            url: "update_track_status.php",
+                            method: "POST",
+                            data: { appointment_id: appointment_id,
+                                    mechanic_id: mechanic_id,
+                                    estimated_arrival: estimated_arrival,
+                                    current_status: current_status,
+                                    status: status,
+                             },
+                            success: function(data) {
+                              if(data.trim() ==  "Done"){
+                                Swal.fire({
+                                title: "Nice!",
+                                text: "You are on Track!!",
+                                icon: "success"
+                                });
+                              }else{
+                                alert(data);
+                                Swal.fire({
+                                title: "Opps!!",
+                                text: "Error occured",
+                                icon: "error"
+                                });
+                              }
+                              
+                           
+                }
+            });
+        
+    }
+
+
+    $("#started").on("click", function (e) {
+        e.preventDefault(); // Prevent form submission
+        Started();
+    });
+});
+
+$(document).ready(function () {
+    function Completed() {
+
+        var appointment_id = $('#appointment_id').val();
+        var mechanic_id = $('#mechanic_id').val();
+        var estimated_arrival = $('#estimated_arrival').val();
+        var current_status = $('#current_status').val();
+        var status = "Completed";
+
+       
+                        $.ajax({
+                            url: "update_track_status.php",
+                            method: "POST",
+                            data: { appointment_id: appointment_id,
+                                    mechanic_id: mechanic_id,
+                                    estimated_arrival: estimated_arrival,
+                                    current_status: current_status,
+                                    status: status,
+                             },
+                            success: function(data) {
+                              if(data.trim() ==  "Done"){
+                                Swal.fire({
+                                title: "Nice!",
+                                text: "You are on Track!!",
+                                icon: "success"
+                                });
+                              }else{
+                                alert(data);
+                                Swal.fire({
+                                title: "Opps!!",
+                                text: "Error occured",
+                                icon: "error"
+                                });
+                              }
+                              
+                           
+                }
+            });
+        
+    }
+
+
+    $("#complete").on("click", function (e) {
+        e.preventDefault(); // Prevent form submission
+        Completed();
+    });
+});
+              </script>
+
+        </div>
+        <?php
+    }
+} else {
+    echo "<p>No confirmed jobs right now.</p>";
+}
+?>
+
+      </div>
+      </div>
+
+      <div class="tabPanel" id="tab5">
         <div class="location-head">
           <h2>Service Location</h2>
         </div>
@@ -238,7 +491,7 @@ if ($result->num_rows > 0) {
         </div>
 
       </div>
-      <div class="tabPanel" id="tab5">
+      <div class="tabPanel" id="tab6">
         <div class="chat-head">
           <h2>Chat With Customer</h2>
         </div>
@@ -255,7 +508,7 @@ if ($result->num_rows > 0) {
 
         </div>
         </div>
-      <div class="tabPanel" id="tab6">
+      <div class="tabPanel" id="tab7">
         <div class="payment-head">
           <h2>Payment Information</h2>
         </div>
@@ -316,14 +569,14 @@ if ($result->num_rows > 0) {
 
         </div>
       </div>
-      <div class="tabPanel" id="tab7">
+      <div class="tabPanel" id="tab8">
         <div class="profile-head">
             <h2>Profile Information</h2>
         </div>
         <div class="profile-content">
              <form class="profile-form" id="profileForm">
       <div class="profile-pic-section">
-        <img src="https://via.placeholder.com/120" alt="Profile Photo" id="profilePhoto">
+        <img src="" alt="Profile Photo" id="profilePhoto">
         <input type="file" id="uploadPhoto" accept="image/*">
       </div>
 
@@ -354,7 +607,7 @@ if ($result->num_rows > 0) {
                            
               </div>
             </div>
-      <div class="tabPanel" id="tab8">
+      <div class="tabPanel" id="tab9">
         <div class="review-head">
           <h2>My Reviews</h2>
         </div>
@@ -395,7 +648,7 @@ if ($result->num_rows > 0) {
 
             </div>
         </div>
-        <div class="tabPanel" id="tab9">
+        <div class="tabPanel" id="tab10">
         <div class="service-setting-head">
           <h2>Service Settings</h2>
         </div>
@@ -605,7 +858,7 @@ if ($result->num_rows > 0) {
 
             </div>
         </div>
-    <div class="tabPanel" id="tab10">
+    <div class="tabPanel" id="tab11">
         <div class="emergency-head">
           <h2>Emergency Service List</h2>
         </div>
@@ -615,7 +868,7 @@ if ($result->num_rows > 0) {
       </div>
 
 
-      <div class="tabPanel" id="tab11">
+      <div class="tabPanel" id="">
         <script>
            function logOut(){
             window.location.href = "mechanic-logout.php";
@@ -633,5 +886,39 @@ if ($result->num_rows > 0) {
     // Set the current year dynamically
     document.getElementById('year').textContent = new Date().getFullYear();
   </script>
+
+  <script>
+let mechanic_id = "<?= $_SESSION['id']; ?>";
+
+function updateLiveLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            var latitude = position.coords.latitude;
+            var longitude = position.coords.longitude;
+
+            $.ajax({
+                url: "update_live_location.php",
+                method: "POST",
+                data: { mechanic_id: mechanic_id, latitude: latitude, longitude: longitude },
+                success: function (response) {
+                    console.log("Location update:", response);
+                },
+                error: function () {
+                    console.log("Error updating location.");
+                }
+            });
+        }, function(error) {
+            console.log("Location error:", error.message);
+        });
+    }
+}
+
+// Run once on load
+updateLiveLocation();
+
+// Repeat every 10 seconds
+setInterval(updateLiveLocation, 10000);
+</script>
+
 </body>
 </html>
