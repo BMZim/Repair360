@@ -269,205 +269,98 @@ if ($result->num_rows > 0) {
             <p><strong>Description:</strong> <?= htmlspecialchars($row['description']); ?></p>
             
             <!-- Tracking form -->
-           <form method="post" 
+           <form method="post" class="track-form" 
       style="border:1px solid #ccc; padding:15px; border-radius:8px; background:#f9f9f9; margin-top:15px; width:100%; max-width:420px; font-family:Arial, sans-serif;">
-    <input type="hidden" id="appointment_id" name="appointment_id" value="<?= $row['appointment_id']; ?>">
-    <input type="hidden" id="mechanic_id" name="mechanic_id" value="<?= $mechanic_id; ?>">
+    <input type="hidden" class="appointment_id" name="appointment_id" value="<?= $row['appointment_id']; ?>">
+    <input type="hidden" class="mechanic_id" name="mechanic_id" value="<?= $mechanic_id; ?>">
 
     <?php if ($row['track_status'] == "" || $row['track_status'] == "Pending") { ?>
         <label style="display:block; margin-bottom:6px; font-weight:bold; color:#333;">Estimated Arrival Time:</label>
-        <input type="datetime-local" id="estimated_arrival" name="estimated_arrival" required 
+        <input type="datetime-local" class="estimated_arrival" name="estimated_arrival" required 
                style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ccc; border-radius:4px;">
 
         <label style="display:block; margin-bottom:6px; font-weight:bold; color:#333;">Current Status:</label>
-        <input type="text" id="current_status" name="current_status" placeholder="e.g. Traffic delay, leaving now" required
+        <input type="text" class="current_status" name="current_status" placeholder="e.g. Traffic delay, leaving now" required
                style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ccc; border-radius:4px;">
 
-        <button id="way" type="submit" name="action" value="On the Way" 
+        <button type="button" class="btn-way" 
                 style="width:100%; padding:10px; border:none; border-radius:4px; background-color:#38a169; color:white; font-weight:bold; cursor:pointer; transition:all 0.3s ease;">
             On The Way
         </button>
     <?php } elseif ($row['track_status'] == "On the Way") { ?>
-        <button id="started" type="submit" name="action" value="Work Started" 
+        <button type="button" class="btn-started" 
                 style="width:100%; padding:10px; border:none; border-radius:4px; background-color:#f6ad55; color:white; font-weight:bold; cursor:pointer; transition:all 0.3s ease;">
             Work Started
         </button>
     <?php } elseif ($row['track_status'] == "Work Started") { ?>
-        <button id="complete" type="submit" name="action" value="Completed" 
+        <button type="button" class="btn-complete" 
                 style="width:100%; padding:10px; border:none; border-radius:4px; background-color:#3182ce; color:white; font-weight:bold; cursor:pointer; transition:all 0.3s ease;">
             Completed
         </button>
     <?php } ?>
-
-    <style>
-        button[name="action"][value="On the Way"]:hover {
-            background-color: #2f855a; 
-            transform: scale(1.05);
-            box-shadow: 0 4px 10px rgba(56, 161, 105, 0.5);
-        }
-        button[name="action"][value="Work Started"]:hover {
-            background-color: #dd6b20;
-            transform: scale(1.05);
-            box-shadow: 0 4px 10px rgba(214, 125, 50, 0.5);
-        }
-        button[name="action"][value="Completed"]:hover {
-            background-color: #2b6cb0;
-            transform: scale(1.05);
-            box-shadow: 0 4px 10px rgba(49, 130, 206, 0.5);
-        }
-    </style>
 </form>
 
 
+
             <script>
-                $(document).ready(function () {
-    function OnTheWay() {
+               $(document).ready(function () {
+    // On The Way
+    $(document).on("click", ".btn-way", function () {
+        let form = $(this).closest(".track-form");
+        let appointment_id = form.find(".appointment_id").val();
+        let mechanic_id = form.find(".mechanic_id").val();
+        let estimated_arrival = form.find(".estimated_arrival").val();
+        let current_status = form.find(".current_status").val();
+        let status = "On the Way";
 
-        var appointment_id = $('#appointment_id').val();
-        var mechanic_id = $('#mechanic_id').val();
-        var estimated_arrival = $('#estimated_arrival').val();
-        var current_status = $('#current_status').val();
-        var status = "On the Way";
-
-        if (estimated_arrival &&  current_status  !== "") {
-                        $.ajax({
-                            url: "update_track_status.php",
-                            method: "POST",
-                            data: { appointment_id: appointment_id,
-                                    mechanic_id: mechanic_id,
-                                    estimated_arrival: estimated_arrival,
-                                    current_status: current_status,
-                                    status: status,
-                             },
-                            success: function(data) {
-                              if(data.trim() ==  "Done"){
-                                Swal.fire({
-                                title: "Nice!",
-                                text: "You are on Track!!",
-                                icon: "success"
-                                });
-                              }else{
-                                alert(data);
-                                Swal.fire({
-                                title: "Opps!!",
-                                text: "Error occured",
-                                icon: "error"
-                                });
-                              }
-                              
-                           
+        if (estimated_arrival && current_status !== "") {
+            $.post("update_track_status.php", {
+                appointment_id, mechanic_id, estimated_arrival, current_status, status
+            }, function (data) {
+                if (data.trim() === "Done") {
+                    Swal.fire("Nice!", "You are on Track!!", "success").then(() => location.reload());
+                } else {
+                    Swal.fire("Opps!!", "Error occured", "error");
                 }
             });
         } else {
-            Swal.fire({
-                                title: "Opps!!",
-                                text: "Fill all fields!!",
-                                icon: "error"
-                                });
+            Swal.fire("Opps!!", "Fill all fields!!", "error");
         }
-    }
+    });
 
+    // Work Started
+    $(document).on("click", ".btn-started", function () {
+        let form = $(this).closest(".track-form");
+        let appointment_id = form.find(".appointment_id").val();
+        let mechanic_id = form.find(".mechanic_id").val();
+        let status = "Work Started";
 
-    $("#way").on("click", function (e) {
-        e.preventDefault(); // Prevent form submission
-        OnTheWay();
+        $.post("update_track_status.php", { appointment_id, mechanic_id, status }, function (data) {
+            if (data.trim() === "Done") {
+                Swal.fire("Nice!", "You can start your work!!", "success").then(() => location.reload());
+            } else {
+                Swal.fire("Opps!!", "Error occured", "error");
+            }
+        });
+    });
+
+    // Completed
+    $(document).on("click", ".btn-complete", function () {
+        let form = $(this).closest(".track-form");
+        let appointment_id = form.find(".appointment_id").val();
+        let mechanic_id = form.find(".mechanic_id").val();
+        let status = "Completed";
+
+        $.post("update_track_status.php", { appointment_id, mechanic_id, status }, function (data) {
+            if (data.trim() === "Done") {
+                Swal.fire("Nice!", "Congratulations you completed your work!!", "success").then(() => location.reload());
+            } else {
+                Swal.fire("Opps!!", "Error occured", "error");
+            }
+        });
     });
 });
 
-$(document).ready(function () {
-    function Started() {
-
-        var appointment_id = $('#appointment_id').val();
-        var mechanic_id = $('#mechanic_id').val();
-        var estimated_arrival = $('#estimated_arrival').val();
-        var current_status = $('#current_status').val();
-        var status = "Work Started";
-
-                        $.ajax({
-                            url: "update_track_status.php",
-                            method: "POST",
-                            data: { appointment_id: appointment_id,
-                                    mechanic_id: mechanic_id,
-                                    estimated_arrival: estimated_arrival,
-                                    current_status: current_status,
-                                    status: status,
-                             },
-                            success: function(data) {
-                              if(data.trim() ==  "Done"){
-                                Swal.fire({
-                                title: "Nice!",
-                                text: "You are on Track!!",
-                                icon: "success"
-                                });
-                              }else{
-                                alert(data);
-                                Swal.fire({
-                                title: "Opps!!",
-                                text: "Error occured",
-                                icon: "error"
-                                });
-                              }
-                              
-                           
-                }
-            });
-        
-    }
-
-
-    $("#started").on("click", function (e) {
-        e.preventDefault(); // Prevent form submission
-        Started();
-    });
-});
-
-$(document).ready(function () {
-    function Completed() {
-
-        var appointment_id = $('#appointment_id').val();
-        var mechanic_id = $('#mechanic_id').val();
-        var estimated_arrival = $('#estimated_arrival').val();
-        var current_status = $('#current_status').val();
-        var status = "Completed";
-
-       
-                        $.ajax({
-                            url: "update_track_status.php",
-                            method: "POST",
-                            data: { appointment_id: appointment_id,
-                                    mechanic_id: mechanic_id,
-                                    estimated_arrival: estimated_arrival,
-                                    current_status: current_status,
-                                    status: status,
-                             },
-                            success: function(data) {
-                              if(data.trim() ==  "Done"){
-                                Swal.fire({
-                                title: "Nice!",
-                                text: "You are on Track!!",
-                                icon: "success"
-                                });
-                              }else{
-                                alert(data);
-                                Swal.fire({
-                                title: "Opps!!",
-                                text: "Error occured",
-                                icon: "error"
-                                });
-                              }
-                              
-                           
-                }
-            });
-        
-    }
-
-
-    $("#complete").on("click", function (e) {
-        e.preventDefault(); // Prevent form submission
-        Completed();
-    });
-});
               </script>
 
         </div>

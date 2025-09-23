@@ -292,6 +292,11 @@ color: #d61010;
 }
 .item3 .track-service-content{
   display: flex;
+  flex-direction: column;
+}
+.item3 .track-data{
+  display: flex;
+  padding: 10px;
 }
 .item3  .track-service-content {
 max-width: 900px;

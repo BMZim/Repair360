@@ -280,32 +280,105 @@ function showLocation(lat, lng) {
           <h2>Service History</h2>
         </div>
         <div class="track-service-content">
-           <div class="status-card">
-  <div class="status-header">
-    <strong>Service:</strong> Washing Machine Repair
-  </div>
-  <div class="status-info">
-    <p><strong>Technician:</strong> Mahfuz Rahman</p>
-    <p><strong>Estimated Arrival:</strong> 11:00 AM, July 20, 2025</p>
-    <p><strong>Current Status:</strong> <span class="status in-progress">In Progress</span></p>
-  </div>
-  <div class="status-steps">
-    <ul>
-      <li class="done">Booked</li>
-      <li class="done">Assigned</li>
-      <li class="active">On the Way</li>
-      <li>Work Started</li>
-      <li>Completed</li>
-    </ul>
-  </div>
-</div>
-<div class="fa-location">
-    
-</div>
+            <?php
+include("db.php");
 
-          
-        </div>
+$customer_id = $_SESSION['customer_id'];
+
+// Get only Pending or Confirmed appointments for this customer
+$sql1 = "SELECT appointment_id, status 
+         FROM appointments 
+         WHERE customer_id = ? AND status IN ('Pending', 'Confirmed')";
+$stmt1 = $conn->prepare($sql1);
+$stmt1->bind_param("i", $customer_id);
+$stmt1->execute();
+$res1 = $stmt1->get_result();
+
+if ($res1->num_rows > 0) {
+    while($row1 = $res1->fetch_assoc()) {
+        $appointment_id = $row1['appointment_id'];
+        $appt_status    = $row1['status'];  // Pending or Confirmed
+
+        $sql = "SELECT 
+                    s.skills AS service_name,
+                    m.full_name AS mechanic_name,
+                    ts.estimated_arrival,
+                    ts.current_status,
+                    ts.status AS track_status
+                FROM appointments a
+                JOIN service s ON a.service_id = s.service_id
+                JOIN mechanic m ON a.mechanic_id = m.mechanic_id
+                LEFT JOIN track_status ts ON a.appointment_id = ts.appointment_id
+                WHERE a.appointment_id = ?";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $appointment_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($row = $result->fetch_assoc()) {
+            $service = htmlspecialchars($row['service_name']);
+            $mechanic = htmlspecialchars($row['mechanic_name']);
+            $arrival = $row['estimated_arrival'] ?? "Not Set";
+            $current_status = $row['current_status'] ?? "Not Updated";
+            $track_status = $row['track_status'] ?? "";
+            ?>
+            
+            <div class="track-data">
+                <div class="status-card">
+              <div class="status-header">
+                <strong>Service:</strong> <?= $service; ?>
+              </div>
+              <div class="status-info">
+                <p><strong>Technician:</strong> <?= $mechanic; ?></p>
+                <p><strong>Estimated Arrival:</strong> <?= $arrival; ?></p>
+                <p><strong>Current Status:</strong> 
+                    <span class="status in-progress"><?= htmlspecialchars($current_status); ?></span>
+                </p>
+              </div>
+              <div class="status-steps">
+                <ul>
+                  <!-- Booked step -->
+                  <li class="<?= ($appt_status == 'Pending' ? 'done' : '') ?>">Booked</li>
+
+                  <!-- Assigned step -->
+                  <li class="<?= ($appt_status == 'Confirmed' ? 'done' : '') ?>">Assigned</li>
+
+                  <!-- On the Way step -->
+                  <li class="<?= ($track_status == 'On the Way' ? 'active' : 
+                                  ($track_status == 'Work Started' || $track_status == 'Completed' ? 'done' : '')) ?>">
+                      On the Way
+                  </li>
+
+                  <!-- Work Started step -->
+                  <li class="<?= ($track_status == 'Work Started' ? 'active' : 
+                                  ($track_status == 'Completed' ? 'done' : '')) ?>">
+                      Work Started
+                  </li>
+
+                  <!-- Completed step -->
+                  <li class="<?= ($track_status == 'Completed' ? 'active' : '') ?>">Completed</li>
+                </ul>
+              </div>
+            </div>
+            <div class="fa-location">
+                
+            </div>
+            </div>
+            <?php
+        }
+    }
+} else {
+    echo "<p>No active appointments found.</p>";
+}
+?>
+       
+          </div>
+           
+
       </div>
+
+
       <div class="tabPanel">
         <div class="chat-head">
           <h2>Support Center</h2>
