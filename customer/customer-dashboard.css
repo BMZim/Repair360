@@ -297,6 +297,15 @@ color: #d61010;
 .item3 .track-data{
   display: flex;
   padding: 10px;
+  gap: 10px;
+}
+.item3 .track-data .fa-location{
+  display: flex;
+  flex-direction: column;
+}
+.item3 .track-data .fa-location iframe{
+  box-shadow: 0px 0px 10px black;
+  border-radius: 8px;
 }
 .item3  .track-service-content {
 max-width: 900px;
