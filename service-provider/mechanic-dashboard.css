@@ -125,13 +125,21 @@
         cursor: pointer;
     }
 
-   .item3  .jobs-content {
+  .item3  .job-content {
   max-width: 900px;
-  margin: 40px auto;
-  padding: 30px;
+  margin: 10px auto;
+  padding: 20px;
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+.item3  .job-list{
+  display: flex;
+  justify-content: space-between;
+}
+.item3  .job-list .job-location iframe{
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px black;
 }
 
 .item3 .jobs-content h2 {

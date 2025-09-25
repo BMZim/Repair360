@@ -66,7 +66,6 @@ if($valid == true){
 <?php
 include("connection.php");
 
-
 $mechanic_id = $_SESSION['id']; // Logged-in mechanic
 
 $sql = "SELECT 
@@ -74,6 +73,7 @@ $sql = "SELECT
             a.appointment_date,
             a.appointment_time,
             a.description,
+            c.customer_id,
             c.full_name AS customer_name,
             c.address AS customer_address,
             s.shop_name AS service_name
@@ -83,7 +83,6 @@ $sql = "SELECT
         WHERE a.mechanic_id = ? AND a.status = 'Pending'
         ORDER BY a.appointment_date, a.appointment_time ASC";
 
-
 $stmt = $con->prepare($sql);
 $stmt->bind_param("s", $mechanic_id);
 $stmt->execute();
@@ -92,8 +91,11 @@ $result = $stmt->get_result();
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
         $dateTime = date("d M Y, h:i A", strtotime($row['appointment_date']." ".$row['appointment_time']));
+        $appointment_id = $row['appointment_id'];
+        $customer_id = $row['customer_id'];
         ?>
-        <div class="job-card">
+        <div class="job-list">
+          <div class="job-card">
             <h3><?= htmlspecialchars($row['service_name']); ?></h3>
             <p><strong>Customer:</strong> <?= htmlspecialchars($row['customer_name']); ?></p>
             <p><strong>Address:</strong> <?= htmlspecialchars($row['customer_address']); ?></p>
@@ -101,17 +103,47 @@ if ($result->num_rows > 0) {
             <p><strong>Description:</strong> <?= htmlspecialchars($row['description']); ?></p>
             <div class="action-buttons">
                 <form method="post" action="update_appointments.php" style="display:inline;">
-                    <input type="hidden" name="appointment_id" value="<?= $row['appointment_id']; ?>">
+                    <input type="hidden" name="appointment_id" value="<?= $appointment_id; ?>">
                     <input type="hidden" name="status" value="Confirmed">
                     <button type="submit" class="accept-btn">Accept</button>
                 </form>
                 <form method="post" action="update_appointments.php" style="display:inline;">
-                    <input type="hidden" name="appointment_id" value="<?= $row['appointment_id']; ?>">
+                    <input type="hidden" name="appointment_id" value="<?= $appointment_id; ?>">
                     <input type="hidden" name="status" value="Cancelled">
                     <button type="submit" class="decline-btn">Decline</button>
                 </form>
             </div>
+          </div>
+          <div style="display: flex; flex-direction:column; text-align:center; justify-content:center;">
+            <span style='font-size:50px;'>&#8594;</span>
+            <p>See customer location</p>
+          </div>
+          
+
+          <!-- Customer live location -->
+          <div class="job-location" style="margin-top:10px;">
+              <iframe id="map-<?= $appointment_id ?>" src="" width="100%" height="225" style="border:0;" allowfullscreen></iframe>
+          </div>
         </div>
+
+        <script>
+        function updateCustomerLocation<?= $appointment_id ?>() {
+            fetch("live_location_customer.php?customer_id=<?= $customer_id ?>")
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const lat = data.latitude;
+                    const lng = data.longitude;
+                    document.getElementById("map-<?= $appointment_id ?>").src =
+                       "https://www.google.com/maps?q=" + lat + "," + lng + "&hl=es;z=14&output=embed";
+                }
+            });
+        }
+        // Run immediately and then every 10s
+        updateCustomerLocation<?= $appointment_id ?>();
+        setInterval(updateCustomerLocation<?= $appointment_id ?>, 10000);
+        </script>
+        
         <?php
     }
 } else {
@@ -120,9 +152,9 @@ if ($result->num_rows > 0) {
 ?>
 </div>
 
-
-
       </div>
+
+
       <div class="tabPanel" id="tab2">
         <div class="appointment-head">
           <h2>Appointments Details</h2>
@@ -389,18 +421,115 @@ if ($result->num_rows > 0) {
           <h2>Chat With Customer</h2>
         </div>
         <div class="chat-content">
-            <div class="chat-box" id="chatBox">
-      <div class="message received">Hello! My fridge isn't cooling properly.</div>
-      <div class="message sent">Thanks for contacting Repair360. When did it stop working?</div>
-    </div>
+            <?php
+        include("connection.php");
 
-    <div class="input-area">
-      <input type="text" id="messageInput" placeholder="Type your message..." />
-      <button onclick="sendMessage()">Send</button>
+    if (!isset($_SESSION['id'])) {
+         echo "<p>Please login.</p>";
+        return;
+      }
+      $mechanic_id = intval($_SESSION['id']);
+      ?>
+
+        <div style="display:flex; height:560px; border:1px solid #ddd; border-radius:8px; overflow:hidden; font-family:Arial, sans-serif;">
+          <div id="mechanic-chat-sidebar" style="width:32%; background:#f7f8fb; border-right:1px solid #e6e6e6; overflow-y:auto;">
+            <div style="padding:12px; font-weight:700; border-bottom:1px solid #eee;">Customers (Confirmed)</div>
+            <ul id="mechanic-chat-list" style="list-style:none; margin:0; padding:0;">
+              <?php
+      $sql = "SELECT DISTINCT a.appointment_id, c.customer_id, c.full_name, c.avatar,
+                     (SELECT message FROM chat_messages cm WHERE cm.appointment_id = a.appointment_id ORDER BY cm.created_at DESC LIMIT 1) AS last_message,
+                     (SELECT created_at FROM chat_messages cm WHERE cm.appointment_id = a.appointment_id ORDER BY cm.created_at DESC LIMIT 1) AS last_time
+              FROM appointments a
+              JOIN customers c ON a.customer_id = c.customer_id
+              WHERE a.mechanic_id = ? AND a.status = 'Confirmed'
+              ORDER BY last_time DESC, a.appointment_date DESC";
+      $stmt = $con->prepare($sql);
+      $stmt->bind_param("i", $mechanic_id);
+      $stmt->execute();
+      $stmt->store_result();
+      $stmt->bind_result($appointment_id, $customer_id, $customer_name, $customer_avatar, $last_message, $last_time);
+
+      while ($stmt->fetch()) {
+          $avatar = $customer_avatar ? htmlspecialchars($customer_avatar) : 'default-avatar.png';
+          $snippet = $last_message ? htmlspecialchars(mb_strimwidth($last_message, 0, 40, '...')) : '';
+          $time = $last_time ? date('d M H:i', strtotime($last_time)) : '';
+          echo '<li class="mchat-user" data-appointment="'.intval($appointment_id).'" data-customer="'.intval($customer_id).'" style="padding:10px; display:flex; gap:10px; align-items:center; border-bottom:1px solid #f0f0f0; cursor:pointer;">';
+          echo '<img src="uploads/'. $avatar .'" style="width:44px; height:44px; border-radius:50%; object-fit:cover;">';
+          echo '<div style="flex:1;"><div style="font-weight:600;">'.htmlspecialchars($customer_name).'</div>';
+          echo '<div style="font-size:13px; color:#666;">'. $snippet .'</div></div>';
+          echo '<div style="font-size:12px; color:#999;">'. $time .'</div>';
+          echo '</li>';
+      }
+      $stmt->close();
+      ?>
+    </ul>
+  </div>
+
+  <!-- Right: Chat window -->
+  <div style="flex:1; display:flex; flex-direction:column; background:#fff;">
+    <div id="mchat-header" style="padding:12px; border-bottom:1px solid #eee; font-weight:700;">Select a customer to chat</div>
+    <div id="mchat-messages" style="flex:1; padding:12px; overflow-y:auto; background:#fefefe;"></div>
+
+    <div style="padding:10px; border-top:1px solid #eee; display:flex; gap:8px;">
+      <input id="mchat-input" type="text" placeholder="Type a message..." style="flex:1; padding:10px; border:1px solid #ddd; border-radius:20px;">
+      <button id="mchat-send" style="padding:10px 18px; border-radius:20px; border:none; background:#3182ce; color:#fff; font-weight:600; cursor:pointer;">Send</button>
     </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+let activeAppointment = null;
+let pollInterval = null;
+
+// click a customer in sidebar
+$(document).on('click', '.mchat-user', function () {
+    $('.mchat-user').css('background','');
+    $(this).css('background','#eef7ff');
+    activeAppointment = $(this).data('appointment');
+    const customerName = $(this).find('div > div:first').text();
+    $('#mchat-header').text(customerName);
+
+    loadMechanicChat();
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = setInterval(loadMechanicChat, 3000); // poll every 3s
+});
+
+// load messages
+function loadMechanicChat() {
+    if (!activeAppointment) return;
+    $.get('chat/load_chat_mechanic.php', { appointment_id: activeAppointment }, function (html) {
+        $('#mchat-messages').html(html);
+        $('#mchat-messages').scrollTop($('#mchat-messages')[0].scrollHeight);
+    });
+}
+
+// send message
+$('#mchat-send').on('click', function () {
+    const msg = $('#mchat-input').val().trim();
+    if (!msg || !activeAppointment) return;
+    $.post('chat/send_chat_mechanic.php', {
+        appointment_id: activeAppointment,
+        message: msg
+    }, function (res) {
+        // optionally check response
+        $('#mchat-input').val('');
+        loadMechanicChat();
+    });
+});
+
+// send on enter
+$('#mchat-input').on('keypress', function (e) {
+    if (e.which === 13 && !e.shiftKey) {
+        e.preventDefault(); $('#mchat-send').click();
+    }
+});
+</script>
+
 
         </div>
         </div>
+
       <div class="tabPanel" id="tab7">
         <div class="payment-head">
           <h2>Payment Information</h2>
@@ -467,11 +596,15 @@ if ($result->num_rows > 0) {
             <h2>Profile Information</h2>
         </div>
         <div class="profile-content">
-             <form class="profile-form" id="profileForm">
-      <div class="profile-pic-section">
+          <form action="">
+            <div class="profile-pic-section">
         <img src="" alt="Profile Photo" id="profilePhoto">
         <input type="file" id="uploadPhoto" accept="image/*">
+        <button>Save</button>
       </div>
+          </form>
+             <form class="profile-form" id="profileForm">
+      
 
       <label for="name">Full Name</label>
       <input type="text" id="name" placeholder="e.g. Hasan Kabir" required>

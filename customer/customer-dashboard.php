@@ -401,22 +401,99 @@ if ($res1->num_rows > 0) {
         <div class="chat-head">
           <h2>Support Center</h2>
         </div>
-        <div class="chat-content">
-          <div class="chat-box">
-  <div class="chat-messages" id="chatMessages">
-    <div class="message left">Hello! How can we assist you today?</div>
-    <div class="message right">I need help tracking my appointment.</div>
-    <div class="message left">Sure! Please provide your booking ID.</div>
-  </div>
+        <div class="chat-content" style="display:flex; height:600px; border:1px solid #ccc; border-radius:8px; font-family:Arial, sans-serif;">
 
-  <div class="chat-input">
-    <input type="text" id="messageInput" placeholder="Type your message..." />
-    <button onclick="sendMessage()">Send</button>
-  </div>
+    <!-- LEFT SIDEBAR (Mechanics List) -->
+    <div class="chat-sidebar" style="width:30%; border-right:1px solid #ddd; background:#f7f7f7; overflow-y:auto;">
+        <div style="padding:10px; font-weight:bold;">Chats</div>
+        <ul style="list-style:none; padding:0; margin:0;">
+        <?php
+        include("db.php");
+        $customer_id = $_SESSION['customer_id'];
+
+        // Mechanics for confirmed appointments
+        $sql = "SELECT DISTINCT m.mechanic_id, m.full_name, m.avatar, a.appointment_id
+                FROM appointments a
+                JOIN mechanic m ON a.mechanic_id = m.mechanic_id
+                WHERE a.customer_id = ? AND a.status='Confirmed'";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $customer_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        while($row = $result->fetch_assoc()) {
+            ?>
+            <li class="chat-user" data-appointment="<?= $row['appointment_id']; ?>" 
+                data-mechanic="<?= $row['mechanic_id']; ?>" 
+                style="padding:10px; cursor:pointer; display:flex; align-items:center; gap:10px; border-bottom:1px solid #eee;">
+                <img src="uploads/<?= htmlspecialchars($row['avatar']); ?>" alt="" style="width:40px; height:40px; border-radius:50%;">
+                <span><?= htmlspecialchars($row['full_name']); ?></span>
+            </li>
+            <?php
+        }
+        ?>
+        </ul>
+    </div>
+
+    <!-- RIGHT CHAT WINDOW -->
+    <div class="chat-window" style="flex:1; display:flex; flex-direction:column;">
+        <div class="chat-header" style="padding:10px; border-bottom:1px solid #ddd; font-weight:bold;">
+            Select a mechanic to start chat
+        </div>
+        <div class="chat-messages" id="chat-messages" style="flex:1; padding:15px; overflow-y:auto; background:#fff;">
+            <!-- Messages will load here -->
+        </div>
+        <div class="chat-input" style="padding:10px; border-top:1px solid #ddd; display:flex; gap:10px;">
+            <input type="text" id="chat-message" placeholder="Type your message..." 
+                   style="flex:1; padding:10px; border:1px solid #ccc; border-radius:20px;">
+            <button id="send-btn" style="padding:10px 20px; border:none; border-radius:20px; background:#4a90e2; color:white; cursor:pointer;">
+                Send
+            </button>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+let activeAppointment = null;
+let mechanicId = null;
+
+// Load chat messages when user clicks a mechanic
+$(".chat-user").on("click", function(){
+    activeAppointment = $(this).data("appointment");
+    mechanicId = $(this).data("mechanic");
+    $(".chat-header").text($(this).find("span").text());
+
+    loadMessages();
+    setInterval(loadMessages, 5000); // refresh every 5s
+});
+
+// Load messages via AJAX
+function loadMessages(){
+    if(!activeAppointment) return;
+    $.get("chat/load_chat.php", {appointment_id: activeAppointment}, function(data){
+        $("#chat-messages").html(data);
+        $("#chat-messages").scrollTop($("#chat-messages")[0].scrollHeight);
+    });
+}
+
+// Send message
+$("#send-btn").on("click", function(){
+    let msg = $("#chat-message").val();
+    if(msg.trim()=="" || !activeAppointment) return;
+
+    $.post("chat/send_chat.php", {
+        appointment_id: activeAppointment,
+        sender_type: "customer",
+        sender_id: <?= $customer_id ?>,
+        message: msg
+    }, function(){
+        $("#chat-message").val("");
+        loadMessages();
+    });
+});
+</script>
+
 </div>
 
-      
-        </div>
 
       </div>
       <div class="tabPanel">
@@ -606,5 +683,37 @@ if ($res1->num_rows > 0) {
     // Set the current year dynamically
     document.getElementById('year').textContent = new Date().getFullYear();
   </script>
+  <script>
+let customer_id = "<?= $_SESSION['customer_id']; ?>";
+
+function updateLiveLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            var latitude = position.coords.latitude;
+            var longitude = position.coords.longitude;
+
+            $.ajax({
+                url: "update_live_location.php",
+                method: "POST",
+                data: { customer_id: customer_id, latitude: latitude, longitude: longitude },
+                success: function (response) {
+                    console.log("Location update:", response);
+                },
+                error: function () {
+                    console.log("Error updating location.");
+                }
+            });
+        }, function(error) {
+            console.log("Location error:", error.message);
+        });
+    }
+}
+
+// Run once on load
+updateLiveLocation();
+
+// Repeat every 10 seconds
+setInterval(updateLiveLocation, 10000);
+</script>
 </body>
 </html>
