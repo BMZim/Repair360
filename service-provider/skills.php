@@ -66,19 +66,16 @@
 </div>
 
 <script>
-  // Skills data
   const skillData = {
-    Home: ["Plumbing", "Electrical", "Carpentry", "Painting", "AC Repair", "Cleaning"],
+    Home: ["Plumbing", "Electrical", "Carpentry", "Painting", "Cleaning"],
     Vehicle: ["Car Repair", "Bike Repair", "Truck Repair", "Oil Change", "Tire Replacement", "Battery Service"],
-    Tech: ["Computer Repair", "Mobile Repair", "TV Repair", "Refrigerator Repair", "Washing Machine Repair", "Networking"]
+    Tech: ["Computer Repair", "Mobile Repair", "TV Repair", "AC Repair", "Refrigerator Repair", "Washing Machine Repair", "Networking"]
   };
 
-  // Get mechanicType from URL
   const params = new URLSearchParams(window.location.search);
   const type = params.get("type");
   const id = params.get("id");
   
-  // Display skills
   const container = document.getElementById("skillsContainer");
   if (type && skillData[type]) {
     document.getElementById("title").innerText = "Select " + type + " Skills:";
@@ -111,7 +108,6 @@ if (!$id || !$type) {
 
 if (isset($_POST['submit'])) {
 
-    // Make sure at least one skill is selected
     $skills = isset($_POST['skills']) ? $_POST['skills'] : [];
 
     if (empty($skills)) {
@@ -119,10 +115,10 @@ if (isset($_POST['submit'])) {
         exit();
     }
 
-    // Convert array to comma-separated string
+   
     $skills_str = implode(',', $skills);
 
-    // Check if mechanic exists
+  
     $id_valid = "SELECT * FROM mechanic WHERE mechanic_id ='$id'";
     $result = mysqli_query($con, $id_valid);
 

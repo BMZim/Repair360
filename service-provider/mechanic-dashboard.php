@@ -21,7 +21,7 @@ if($valid == true){
     <link rel="stylesheet" href="mechanic-dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />   
 </head>
-<body onload="getLocation()">
+<body>
   <div class="grid-container">
     <div class="item1">
       <div class="head-left">
@@ -42,12 +42,12 @@ if($valid == true){
         <button onclick="showPanel(1, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-calendar-check"></i> My Schedule</button>
         <button onclick="showPanel(2, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-check-to-slot"></i> Job History</button>
         <button onclick="showPanel(3, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-check-to-slot"></i> Track service Confirmation</button>
-        <button onclick="showPanel(4, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-route"></i> Route & Map</button>
+        <button onclick="showPanel(4, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-circle-check"></i> Apply for Verification</button>
         <button onclick="showPanel(5, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-message"></i> Messages</button>
         <button onclick="showPanel(6, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-money-bill"></i> Earnings & Payments</button>
         <button onclick="showPanel(7, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-gears"></i> My Profile</button>
         <button onclick="showPanel(8, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-star"></i> Ratings & Reviews</button>
-        <button onclick="showPanel(9, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-gear"></i> Service Settings</button>
+        <button onclick="showPanel(9, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)'), getLocation()"><i class="fa-solid fa-gear"></i> Service Settings</button>
         <button onclick="showPanel(10, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-truck"></i> Emergency Services</button>
         <button onclick="logOut()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
       </div>
@@ -68,7 +68,11 @@ include("connection.php");
 
 $mechanic_id = $_SESSION['id']; // Logged-in mechanic
 
-$sql = "SELECT 
+$verify = "select status from mechanic where mechanic_id = '$mechanic_id'";
+$is_verified = mysqli_query($con, $verify);
+        $status = mysqli_fetch_assoc($is_verified);
+        if($status['status'] === "Verified"){
+            $sql = "SELECT 
             a.appointment_id,
             a.appointment_date,
             a.appointment_time,
@@ -149,6 +153,12 @@ if ($result->num_rows > 0) {
 } else {
     echo "<p>No jobs assigned yet.</p>";
 }
+        }else{
+          echo '<div class="verify">
+                <h3 style="color: red; font: weight 300px; text-align:center;">Your account is not verified, Please apply for verification then you can post your service in Service setting option.</h3>
+          </div>';
+        }
+
 ?>
 </div>
 
@@ -407,12 +417,68 @@ if ($result->num_rows > 0) {
       </div>
 
       <div class="tabPanel" id="tab5">
-        <div class="location-head">
-          <h2>Service Location</h2>
+        <div class="verification-head">
+          <h2>Verify Your Account</h2>
         </div>
-        <div class="location-content">
-          <div id="map"></div>
-      
+        <div class="verification-content">
+          <form method="POST" id="verification-form">
+          <?php 
+            include ('connection.php');
+
+            $mechanic_id = $_SESSION['id'];
+              
+            $sql = "select * from mechanic where mechanic_id ='$mechanic_id'";
+            $result = mysqli_query($con, $sql);
+
+            $rows = $result->fetch_assoc();
+
+            echo 'Mechanic ID:<p id="mechanic_id" style="color:red; font-weight:600;">'.$rows['mechanic_id'].'</p>';
+            echo 'Name: '.$rows['full_name'].'<br><br>';
+            echo 'Division: '.$rows['division'].'<br><br>';
+            echo 'Address: '.$rows['address'].'<br><br>';
+            echo 'Phone: '.$rows['phone'].'<br><br>';
+            echo 'City: '.$rows['city'].'<br><br>';
+            echo 'Mechanic Type: '.$rows['mechanic_type'].'<br><br>';
+            echo 'NID: '.$rows['nid'].'<br><br>';
+            echo '<p style="color:red;">⚠️ Please ensure the data you entered is accurate.<br> If it\'s incorrect, update it with the correct information in profile settings.</p><br>';
+            
+
+          ?>
+           <button type="submit" id="submit" name="submit" value="Apply">Apply</button>
+          </form>  
+          <script>
+          $(document).on("submit", "#verification-form", function(e){
+            e.preventDefault();
+
+             var verify = "Verify";
+             var mechanic_id = $('#mechanic_id').text();
+            $.ajax({
+              type: 'POST',
+              url: 'verification.php',
+              data : {Verify: verify, mechanic_id: mechanic_id},
+            success: function(response){
+              res = response.trim();
+        if (res === "OK"){
+          Swal.fire({
+                  icon: "success",
+                  title: "Verification Request Sent",
+                  text: "It will take 1-7 working days!!",
+                  showConfirmButton: false,
+                  timer: 5000
+                });
+        }else{
+          Swal.fire({
+                  icon: "warning",
+                  title: "You are Already Verified",
+                  text: "Thank You",
+                  showConfirmButton: false,
+                  timer: 3000
+                });
+        }
+            }
+        });
+          });
+        </script>        
         </div>
 
       </div>
@@ -674,215 +740,167 @@ $('#mchat-input').on('keypress', function (e) {
 
             </div>
         </div>
+
+
         <div class="tabPanel" id="tab10">
         <div class="service-setting-head">
           <h2>Service Settings</h2>
         </div>
         <div class="service-setting-content">
-          <p style="color: red;">"Please add or update your service settings while you are at your shop; otherwise, customers will not be able to see your shop location."</p>
-          <form class="settings-form" method="POST">
-      <h3>Select Services Offered:</h3>
-
-      <div class="service-option">
-        <label>Shop Name:</label>
-        <input type="text" name="shopName" id="shopName" placeholder="Enter your shop name"><br>
-        
-      </div>
-
-      <div class="service-option">
-        <label>Mechanic Type:</label>
-        <select id="mechanic_type" name="mechanic_type">
-        
-         <?php
+         <?php 
           include('connection.php');
+          $mechanic_id = $_SESSION['id']; // Logged-in mechanic
 
-          $id = $_SESSION['id'];
+          $verify = "SELECT status FROM mechanic WHERE mechanic_id = '$mechanic_id'";
+          $is_verified = mysqli_query($con, $verify);
+          $status = mysqli_fetch_assoc($is_verified);
 
-          $sql = "select mechanic_type from mechanic_skills where mechanic_id = '$id'";
-          $result = mysqli_query($con, $sql);
+          if ($status['status'] === "Verified") { 
+          ?>
 
-          if(mysqli_num_rows($result)>0){
-                  $row = $result->fetch_assoc();
-                  echo '<option value="'.$row['mechanic_type'].'">'.$row['mechanic_type'].'</option>';
-                }else{
-                  echo '0';
+    <p style="color: red;">"Please add or update your service settings while you are at your shop; otherwise, customers will not be able to see your shop location."</p>
+    <form class="settings-form" method="POST">
+        <h3>Select Services Offered:</h3>
+
+        <div class="service-option">
+            <label>Shop Name:</label>
+            <input type="text" name="shopName" id="shopName" placeholder="Enter your shop name"><br>
+        </div>
+
+        <div class="service-option">
+            <label>Mechanic Type:</label>
+            <select id="mechanic_type" name="mechanic_type">
+                <?php
+                $id = $_SESSION['id'];
+                $sql = "SELECT mechanic_type FROM mechanic_skills WHERE mechanic_id = '$id'";
+                $result = mysqli_query($con, $sql);
+
+                if (mysqli_num_rows($result) > 0) {
+                    $row = $result->fetch_assoc();
+                    echo '<option value="'.$row['mechanic_type'].'">'.$row['mechanic_type'].'</option>';
+                } else {
+                    echo '<option value="">No Type Found</option>';
+                }
+                ?>
+            </select>
+        </div>
+
+        <div class="service-option">
+            <label for="specific">Specify Category:</label>
+            <?php
+            $sql = "SELECT skill_name FROM mechanic_skills WHERE mechanic_id = '$id'";
+            $result = mysqli_query($con, $sql);
+            $mechanic = $result->fetch_assoc();
+            $skills = explode(",", $mechanic['skill_name']);
+            ?>
+            <select name="skills" id="skills">
+                <?php foreach ($skills as $skill): ?>
+                    <option value="<?= htmlspecialchars(trim($skill)); ?>">
+                        <?= htmlspecialchars(trim($skill)); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <div class="service-option">
+            <label for="skills">Expert Areas:</label>
+            <input type="text" id="expert" name="expert" placeholder="e.g. Certified Refrigerator Technician, Cooling System Specialist (Max 5 Skills)" required>
+        </div>
+
+        <div>
+            <label for="shoplocation">Shop Location:</label>
+            <p id="shoplocation"></p>
+            <script>
+                function getLocation() {
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(showPosition, showError);
+                    } else {
+                        Swal.fire({
+                            title: "Oops!!",
+                            text: "Geolocation is not supported by this browser.",
+                            icon: "error"
+                        });
+                        document.getElementById("shoplocation").innerHTML = "Geolocation is not supported by this browser.";
+                    }
                 }
 
-          ?>  
-        
-      </select>
-      </div>
-      <div class="service-option">
-        <label for="specific">Specify Category:</label>
+                function showPosition(position) {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    document.getElementById("shoplocation").innerHTML = latitude + "," + longitude;
+                }
 
-        
-         <?php
-          include('connection.php');
+                function showError(error) {
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            Swal.fire({title: "Oops!!", text: "User denied the request for Shop Location.", icon: "error"});
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            Swal.fire({title: "Oops!!", text: "Location information is unavailable.", icon: "error"});
+                            break;
+                        case error.TIMEOUT:
+                            Swal.fire({title: "Oops!!", text: "The request to get user location timed out.", icon: "error"});
+                            break;
+                        case error.UNKNOWN_ERROR:
+                            Swal.fire({title: "Oops!!", text: "An unknown error occurred.", icon: "error"});
+                            break;
+                    }
+                }
+            </script>
+        </div>
 
-          $id = $_SESSION['id'];
-
-          $sql = "select skill_name from mechanic_skills where mechanic_id = '$id'";
-          $result = mysqli_query($con, $sql);
-
-          $mechanic = $result->fetch_assoc();
-          $skills = explode(",", $mechanic['skill_name']);
-
-          ?>  
-
-        <select name="skills" id="skills">
-        <?php foreach ($skills as $skill): ?>
-        <option value="<?= htmlspecialchars(trim($skill)); ?>">
-            <?= htmlspecialchars(trim($skill)); ?>
-        </option>
-        <?php endforeach; ?>
-      </select>
-
-      </div>
-
-      <div class="service-option">
-        <label for="skills">Expert Areas:</label>
-        <input type="text" id="expert" name="expert" placeholder="e.g. Certified Refrigerator Technician, Cooling System Specialist (Max 5 Skils)" required>
-      </div>
-
-      <div>
-        <label for="shoplocation">Shop Location:</label>
-        <p id="shoplocation"></p>
-          
-          
-          <script>
-
-             function getLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(showPosition, showError);
-      } else {
-        Swal.fire({
-                                title: "Opps!!",
-                                text: "Geolocation is not supported by this browser.",
-                                icon: "error"
-                                });
-        document.getElementById("shoplocation").innerHTML = "Geolocation is not supported by this browser.";
-      }
-    }
-
-    function showPosition(position) {
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
-
-      document.getElementById("shoplocation").innerHTML = + latitude + "," + longitude;
-    }
-
-    function showError(error) {
-      switch(error.code) {
-        case error.PERMISSION_DENIED:
-          Swal.fire({
-                                title: "Opps!!",
-                                text: "User denied the request for Shop Location. Please allow the location and refresh the page",
-                                icon: "error"
-                                });
-                                alert("User denied the request for Shop Location.");
-          break;
-        case error.POSITION_UNAVAILABLE:
-          Swal.fire({
-                                title: "Opps!!",
-                                text: "Location information is unavailable.",
-                                icon: "error"
-                                });
-          alert("Location information is unavailable.");
-          break;
-        case error.TIMEOUT:
-          Swal.fire({
-                                title: "Opps!!",
-                                text: "The request to get user location timed out.",
-                                icon: "error"
-                                });
-          alert("The request to get user location timed out.");
-          break;
-        case error.UNKNOWN_ERROR:
-          Swal.fire({
-                                title: "Opps!!",
-                                text: "An unknown error occurred.",
-                                icon: "error"
-                                });
-          alert("An unknown error occurred.");
-          break;
-      }
-    }
-
-
-          </script>
-
-      </div>
-      <label for="location">Coverage Area:</label>
-      <input type="text" id="coverage" placeholder="e.g. Uttara, Dhaka" required />
-      <button type="submit" name="submitService" id="submitService">Save Settings</button>
+        <label for="location">Coverage Area:</label>
+        <input type="text" id="coverage" placeholder="e.g. Uttara, Dhaka" required />
+        <button type="submit" name="submitService" id="submitService">Save Settings</button>
     </form>
-              <script>
-                $(document).ready(function () {
-    function serviceSetting() {
 
-        var sname = $('#shopName').val();
-        var mechanic_type = $('select[name="mechanic_type"]').val();
-        var skills = $('select[name="skills"]').val();
-        var expert = $('#expert').val();
+    <script>
+        $(document).ready(function () {
+            function serviceSetting() {
+                var sname = $('#shopName').val();
+                var mechanic_type = $('select[name="mechanic_type"]').val();
+                var skills = $('select[name="skills"]').val();
+                var expert = $('#expert').val();
+                expert = expert.replace(/,\s+/g, ',').trim();
+                var shoplocation = $('#shoplocation').text();
+                var coverage = $('#coverage').val();
 
-        // remove spaces after commas
-        expert = expert.replace(/,\s+/g, ',');
-
-        // trim leading/trailing spaces
-        expert = expert.trim();
-
-        var shoplocation = $('#shoplocation').text();
-        var coverage = $('#coverage').val();
-        if (sname &&  expert && coverage  !== "") {
-                        $.ajax({
-                            url: "service.php",
-                            method: "POST",
-                            data: { sname: sname,
-                                    mechanic_type: mechanic_type,
-                                    skills: skills,
-                                    expert: expert,
-                                    shoplocation: shoplocation,
-                                    coverage: coverage,
-                             },
-                            success: function(data) {
-                              if(data.trim() ==  "1"){
-                                Swal.fire({
-                                title: "Nice!",
-                                text: "Service Posted",
-                                icon: "success"
-                                });
-                              }else{
-                                alert(data);
-                                Swal.fire({
-                                title: "Opps!!",
-                                text: "Error occured",
-                                icon: "error"
-                                });
-                              }
-                              
-                           
+                if (sname && expert && coverage !== "") {
+                    $.ajax({
+                        url: "service.php",
+                        method: "POST",
+                        data: { sname, mechanic_type, skills, expert, shoplocation, coverage },
+                        success: function(data) {
+                            if (data.trim() == "1") {
+                                Swal.fire({title: "Nice!", text: "Service Posted", icon: "success"});
+                            } else {
+                                Swal.fire({title: "Oops!!", text: "Error occurred", icon: "error"});
+                            }
+                        }
+                    });
+                } else {
+                    Swal.fire({title: "Oops!!", text: "Fill all fields!!", icon: "error"});
                 }
+            }
+
+            $("#submitService").on("click", function (e) {
+                e.preventDefault(); 
+                serviceSetting();
             });
-        } else {
-            Swal.fire({
-                                title: "Opps!!",
-                                text: "Fill all fields!!",
-                                icon: "error"
-                                });
-        }
-    }
+        });
+    </script>
 
-
-    $("#submitService").on("click", function (e) {
-        e.preventDefault(); // Prevent form submission
-        serviceSetting();
-    });
-});
-              </script>
-
-
+      <?php 
+      } else { 
+          echo '<div class="verify">
+              <h3 style="color: red; text-align:center;">Your account is not verified. Please apply for verification before you can post your service.</h3>
+          </div>';
+      } 
+      ?>
 
             </div>
+
+
         </div>
     <div class="tabPanel" id="tab11">
         <div class="emergency-head">

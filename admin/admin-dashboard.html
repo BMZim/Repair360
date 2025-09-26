@@ -80,8 +80,8 @@ if($valid == true){
          <td>
           <button class="action-btn approve-btn" >Approve</button>
           <button class="action-btn block-btn" >Block</button>
+          <button class="action-btn view-btn" >View</button>
           <button class="action-btn delete-btn" >Delete</button>
-        
         </td>
       </tbody>
     </table>
@@ -99,6 +99,11 @@ if($valid == true){
       <button type="submit">Search</button>
     </form>
     <form action="#" id="serviceForm">
+      <select id="service_type" name="service_type">
+        <option value="">Home</option>
+        <option value="">Vehicle</option>
+        <option value="">Tech</option>
+      </select>
       <input type="text" id="serviceName" placeholder="Service Name (e.g., AC Repair)" required />
       <button type="submit">Add Service</button>
     </form>
@@ -108,6 +113,7 @@ if($valid == true){
       <thead>
         <tr>
           <th>Service ID</th>
+          <th>Service Type</th>
           <th>Service Name</th>
           <th>Actions</th>
         </tr>
@@ -115,6 +121,7 @@ if($valid == true){
       <tbody id="serviceTableBody">
         <!-- Service items will appear here -->
          <td>12345</td>
+         <td>Home</td>
       <td>TV Repair</td>
       <td>
         <button class="action-btn edit-btn">Edit</button>

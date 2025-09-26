@@ -202,6 +202,10 @@
   background-color: #7f8c8d;
   color: white;
 }
+.item3 .manage-user-content .view-btn {
+  background-color: #19af4b;
+  color: white;
+}
 
 .item3 .service-manage-content {
   max-width: 700px;

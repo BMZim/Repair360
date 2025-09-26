@@ -302,6 +302,7 @@ if ($res1->num_rows > 0) {
         $sql = "SELECT 
                     s.skills AS service_name,
                     m.full_name AS mechanic_name,
+                    m.phone,
                     ts.estimated_arrival,
                     ts.current_status,
                     ts.status AS track_status,
@@ -319,6 +320,8 @@ if ($res1->num_rows > 0) {
         if ($row = $result->fetch_assoc()) {
             $service = htmlspecialchars($row['service_name']);
             $mechanic = htmlspecialchars($row['mechanic_name']);
+            $phone = htmlspecialchars($row['phone']); 
+            
             $arrival = $row['estimated_arrival'] ?? "Not Set";
             $current_status = $row['current_status'] ?? "Not Updated";
             $track_status = $row['track_status'] ?? "";
@@ -333,6 +336,7 @@ if ($res1->num_rows > 0) {
                   <div class="status-info">
                     <p><strong>Technician:</strong> <?= $mechanic; ?></p>
                     <p><strong>Estimated Arrival:</strong> <?= $arrival; ?></p>
+                    <p><strong>Technician Phone No:</strong> <?= $phone; ?></p>
                     <p><strong>Current Status:</strong> 
                         <span class="status in-progress"><?= htmlspecialchars($current_status); ?></span>
                     </p>
