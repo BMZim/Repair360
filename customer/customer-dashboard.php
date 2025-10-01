@@ -44,7 +44,7 @@ if($valid == true){
         <button onclick="showPanel(5, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-money-check-dollar"></i> Pay Service Bill</button>
         <button onclick="showPanel(6, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-pen-to-square"></i> My Reviews</button>
         <button onclick="showPanel(7, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-gears"></i> Profile Settings</button>
-        <button onclick="showPanel(8, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)')"><i class="fa-solid fa-truck"></i> Emergency Request</button>
+        <button onclick="showPanel(8, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)'), getLocation()"><i class="fa-solid fa-truck"></i> Emergency Request</button>
         <button onclick="logOut()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
       </div>
   
@@ -634,41 +634,199 @@ $("#send-btn").on("click", function(){
                            
               </div>
             </div>
+
+
       <div class="tabPanel">
         <div class="emergency-content">
-             <div class="emergency-container">
-    <h2>🚨 Emergency Repair Request</h2>
-    <p>If you're facing a critical issue that needs immediate attention, please fill out this form. Our nearest technician will respond as quickly as possible.</p>
 
-    <form id="emergencyForm" onsubmit="submitEmergency(event)">
-      <label for="name">Your Name</label>
-      <input type="text" id="name" placeholder="Full Name" required />
-
-      <label for="contact">Phone Number</label>
-      <input type="tel" id="contact" placeholder="01XXXXXXXXX" required />
-
-      <label for="location">Service Location</label>
-      <input type="text" id="location" placeholder="Full Address" required />
-
-      <label for="serviceType">Problem Type</label>
-      <select id="serviceType" required>
-        <option value="">-- Choose --</option>
-        <option value="AC Not Working">Veichle</option>
-        <option value="Refrigerator Breakdown">Home Appliances</option>
-        <option value="Fan/Light Not Running">Home Tech</option>
-        <option value="Other">Other</option>
-      </select>
-
-      <label for="description">Describe the Issue</label>
-      <textarea id="description" rows="4" placeholder="Provide additional details..."></textarea>
-
-      <button type="submit">Submit Emergency Request</button>
-    </form>
+  <!-- Toggle Buttons -->
+  <div class="emergency-toggle">
+      <button class="toggle-btn active" id="showRequestForm">Request</button>
+      <button class="toggle-btn" id="showMyAppointments">Appointments</button>
   </div>
 
+  <!-- Emergency Request Form -->
+  <div id="requestSection">
+    <div class="emergency-container">
+      <h2>🚨 Emergency Repair Request</h2>
+      <p>If you're facing a critical issue that needs immediate attention, please fill out this form. Our nearest technician will respond as quickly as possible.</p>
 
-            </div>
+      <form id="emergencyForm" method="post">
+        <label for="name">Your Name</label>
+        <input type="text" id="fullname" placeholder="Full Name" required />
+
+        <label for="contact">Phone Number</label>
+        <input type="tel" id="contact" name="contact" placeholder="01XXXXXXXXX" required />
+
+        <label for="location">Service Location</label>
+        <input type="text" id="servicelocation" name="servicelocation" required readonly />
+        
+        <script>
+          function getLocation() {
+              if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(showPosition, showError);
+              } else {
+                  Swal.fire({title:"Oops!!", text:"Geolocation not supported.", icon:"error"});
+              }
+          }
+          function showPosition(position) {
+              document.getElementById("servicelocation").value = 
+                position.coords.latitude + "," + position.coords.longitude;
+          }
+          function showError(error) {
+              Swal.fire({title:"Location Error", text:"Could not fetch location.", icon:"error"});
+          }
+        </script>
+
+        <label for="serviceType">Problem Type</label>
+        <select id="serviceType" name="serviceType" required>
+          <option value="">-- Choose --</option>
+          <option value="Vehicle">Vehicle</option>
+          <option value="Home">Home</option>
+          <option value="Tech">Tech</option>
+        </select>
+
+        <label for="description">Describe the Issue</label>
+        <textarea id="description" name="description" rows="4" placeholder="Provide additional details..."></textarea>
+
+        <button type="submit">Submit Emergency Request</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- My Appointments -->
+ <div id="appointmentsSection" style="display:none;">
+    <?php
+      include("db.php");
+      $customer_id = $_SESSION['customer_id'];
+
+      $sql = "SELECT ea.id, ea.service_type, ea.description, ea.date, ea.time, 
+                     m.full_name AS mechanic_name, m.phone, m.mechanic_id
+              FROM emergency_appointments ea
+              JOIN mechanic m ON ea.mechanic_id = m.mechanic_id
+              WHERE ea.customer_id = ? AND ea.status = 'Confirmed'
+              ORDER BY ea.id DESC";
+      $stmt = $conn->prepare($sql);
+      $stmt->bind_param("i", $customer_id);
+      $stmt->execute();
+      $res = $stmt->get_result();
+
+      if ($res && $res->num_rows > 0) {
+          while($row = $res->fetch_assoc()){
+              $appointmentId = $row['id'];
+              $mechanicId = $row['mechanic_id'];
+              ?>
+              <div class="appointment-card" style="display:flex; gap:20px; align-items:flex-start; flex-direction:column;">
+                <!-- Appointment details -->
+                <div class="appointment-details" style="flex:1;">
+                  <h3>🚨 Emergency Appointment</h3>
+                  <p><strong>Mechanic:</strong> <?= htmlspecialchars($row['mechanic_name']); ?></p>
+                  <p><strong>Mechanic Phone No:</strong> 📞 <?= htmlspecialchars($row['phone']); ?></p>
+                  <p><strong>Problem Type:</strong> <?= htmlspecialchars($row['service_type']); ?></p>
+                  <p><strong>Description:</strong> <?= htmlspecialchars($row['description']); ?></p>
+                  <p><strong>Date:</strong> <?= htmlspecialchars($row['date']); ?></p>
+                  <p><strong>Time:</strong> <?= htmlspecialchars($row['time']); ?></p>
+                </div>
+
+                <!-- Live map -->
+                <div class="appointment-map" style="flex:1; min-width:500px; height:250px;">
+                  <iframe id="map_<?= $appointmentId; ?>" 
+                          src="" 
+                          width="100%" height="100%" style="border-radius:8px;"></iframe>
+                </div>
+              </div>
+
+              <script>
+          function refreshMap_<?= $appointmentId; ?>(){
+              $.getJSON("get_location.php?mechanic_id=<?= $mechanicId; ?>", function(loc){
+                  if(loc.success){
+                      let lat = loc.latitude;
+                      let lng = loc.longitude;
+                      $("#map_<?= $appointmentId; ?>").attr("src",
+                          "https://www.google.com/maps?q="+lat+","+lng+"&hl=es;z=14&output=embed"
+                      );
+                  } else {
+                      console.warn("No live location found for this mechanic.");
+                  }
+              });
+          }
+          
+          refreshMap_<?= $appointmentId; ?>();
+          setInterval(refreshMap_<?= $appointmentId; ?>, 5000);
+          </script>
+              <?php
+          }
+      } else {
+          echo "<p>No emergency appointments yet.</p>";
+      }
+    ?>
+</div>
+</div>
+<script>
+$(document).ready(function(){
+  $("#emergencyForm").on("submit", function(e){
+    e.preventDefault();
+
+    var sname = $('#fullname').val();
+    var service_type = $('select[name="serviceType"]').val();
+    var contact = $('#contact').val();
+    var servicelocation = $('#servicelocation').val();
+    var description = $('#description').val();
+    
+ 
+    $.ajax({
+      url: "submit_emergency.php",
+      type: "POST",
+      data: { sname, service_type, contact, servicelocation, description },
+      success: function(response){
+        if(response.trim() === "OK"){
+          Swal.fire({
+            title: "Success!",
+            text: "Your emergency request has been submitted.",
+            icon: "success"
+          });
+          $("#emergencyForm")[0].reset();
+        } else if(response.trim() === "All fields are required!") {
+          Swal.fire({
+            title: "All fields are required!",
+            text: response,
+            icon: "error"
+          });
+        }else{
+          Swal.fire({
+            title: "Error!",
+            text: response,
+            icon: "error"
+          });
+        }
+      },
+      error: function(){
+        Swal.fire({
+          title: "⚠️ Error!",
+          text: "Could not connect to server.",
+          icon: "error"
+        });
+      }
+    });
+  });
+
+  $("#showRequestForm").on("click", function(){
+      $("#requestSection").show();
+      $("#appointmentsSection").hide();
+      $(this).addClass("active");
+      $("#showMyAppointments").removeClass("active");
+  });
+  $("#showMyAppointments").on("click", function(){
+      $("#appointmentsSection").show();
+      $("#requestSection").hide();
+      $(this).addClass("active");
+      $("#showRequestForm").removeClass("active");
+  });
+});
+</script>
+
         </div>
+        
       <div class="tabPanel">
         <script>
            function logOut(){

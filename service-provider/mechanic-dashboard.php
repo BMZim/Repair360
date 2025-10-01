@@ -907,8 +907,177 @@ $('#mchat-input').on('keypress', function (e) {
           <h2>Emergency Service List</h2>
         </div>
         <div class="emergency-content">
+          <div class="emergency-toggle">
+      <button class="toggle-btn active" id="showRequests">Requests</button>
+      <button class="toggle-btn" id="showAppointments">Appointments</button>
+  </div>
+  <div id="requestsSection">
+      <?php
+      include("connection.php");
+      $mechanic_id = $_SESSION['id']; // logged-in mechanic
 
-        </div>
+      $sql = "SELECT er.id, er.customer_id, er.name, er.contact, er.location, er.service_type, er.description
+              FROM emergency_requests er
+              JOIN customers c ON er.customer_id = c.customer_id
+              WHERE er.status = 'Pending'
+              ORDER BY er.id DESC";
+
+      $result = mysqli_query($con, $sql);
+
+      if ($result && mysqli_num_rows($result) > 0) {
+          while ($row = mysqli_fetch_assoc($result)) {
+              $loc = explode(",", $row['location']);
+              $lat = trim($loc[0]);
+              $lng = trim($loc[1]);
+              ?>
+              <div class="emergency-card">
+                  <div class="emergency-details">
+                      <h3>🚨 Emergency Request</h3>
+                      <p><strong>Customer Name:</strong> <?= htmlspecialchars($row['name']); ?></p>
+                      <p><strong>Phone No:</strong> <?= htmlspecialchars($row['contact']); ?></p>
+                      <p><strong>Problem Type:</strong> <?= htmlspecialchars($row['service_type']); ?></p>
+                      <p><strong>Description:</strong> <?= htmlspecialchars($row['description']); ?></p>
+                      <p class="alert-warning">
+                        ⚠️ Please only click <strong>Accept</strong> if you are ready to take this job.  
+                        If you don’t want to proceed, kindly leave it unaccepted.
+                      </p>
+
+                      <label>Select Date:</label>
+                      <input type="date" id="date_<?= $row['id']; ?>" required><br>
+
+                      <label>Select Time:</label>
+                      <input type="time" id="time_<?= $row['id']; ?>" required><br><br>
+
+                      <button class="accept-btn" 
+                          onclick="acceptRequest(<?= $row['id']; ?>, <?= $row['customer_id']; ?>, '<?= $row['service_type']; ?>', '<?= htmlspecialchars(addslashes($row['description'])); ?>')">
+                          Accept
+                      </button>
+                  </div>
+                  <div class="emergency-map">
+                      <iframe src="https://www.google.com/maps?q=<?= $lat; ?>,<?= $lng; ?>&hl=es;z=14&output=embed"></iframe>
+                  </div>
+              </div>
+          <?php
+          }
+      } else {
+          echo "<p>No emergency requests available.</p>";
+      }
+      ?>
+  </div>
+      <!-- Emergency Appointments Section -->
+  <div id="appointmentsSection" style="display:none;">
+  <?php
+  $sql2 = "SELECT ea.id, ea.customer_id, c.full_name, c.phone, ea.service_type, ea.description, ea.date, ea.time
+           FROM emergency_appointments ea
+           JOIN customers c ON ea.customer_id = c.customer_id
+           WHERE ea.mechanic_id = '$mechanic_id' AND ea.status ='Confirmed'
+           ORDER BY ea.id DESC";
+  $res2 = mysqli_query($con, $sql2);
+
+  if ($res2 && mysqli_num_rows($res2) > 0) {
+      while ($row2 = mysqli_fetch_assoc($res2)) {
+          $appointmentId = $row2['id'];
+          $customerId = $row2['customer_id'];
+          ?>
+          <div class="appointment-card" style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+                <h3>Emergency Appointment</h3>
+              <p><strong>Customer Name:</strong> <?= htmlspecialchars($row2['full_name']); ?></p>
+              <p><strong>Phone No:</strong> 📞 <?= htmlspecialchars($row2['phone']); ?></p>
+              <p><strong>Problem Type:</strong> <?= htmlspecialchars($row2['service_type']); ?></p>
+              <p><strong>Description:</strong> <?= htmlspecialchars($row2['description']); ?></p>
+              <p><strong>Appointment Date:</strong> <?= htmlspecialchars($row2['date']); ?></p>
+              <p><strong>Appointment Time:</strong> <?= htmlspecialchars($row2['time']); ?></p>
+            </div>
+              <!-- Map Section -->
+              <div class="emergency-amap" style="margin-top:15px;">
+                  <iframe id="map_<?= $appointmentId; ?>" 
+                          src="" 
+                          width="100%" height="250" style="border:0;" allowfullscreen="" loading="lazy">
+                  </iframe>
+              </div>
+          </div>
+      
+
+          <script>
+          function refreshCustomerMap_<?= $appointmentId; ?>(){
+              $.getJSON("live_location_customer.php?customer_id=<?= $customerId; ?>", function(loc){
+                  if(loc.success){
+                      let lat = loc.latitude;
+                      let lng = loc.longitude;
+                      $("#map_<?= $appointmentId; ?>").attr("src",
+                          "https://www.google.com/maps?q="+lat+","+lng+"&hl=es;z=14&output=embed"
+                      );
+                  } else {
+                      console.warn("No live location found for this customer.");
+                  }
+              });
+          }
+          
+          refreshCustomerMap_<?= $appointmentId; ?>();
+          setInterval(refreshCustomerMap_<?= $appointmentId; ?>, 5000);
+          </script>
+      <?php
+      }
+  } else {
+      echo "<p>No emergency appointments found.</p>";
+  }
+  ?>
+</div>
+
+  
+      </div>
+
+<script>
+function acceptRequest(requestId, customerId, serviceType, description){
+    let date = $("#date_"+requestId).val();
+    let time = $("#time_"+requestId).val();
+
+    if(!date || !time){
+        Swal.fire("Error!", "Please select date and time!", "error");
+        return;
+    }
+
+    $.ajax({
+        url: "accept_emergency.php",
+        type: "POST",
+        data: {
+            request_id: requestId,
+            customer_id: customerId,
+            service_type: serviceType,
+            description: description,
+            appointment_date: date,
+            appointment_time: time
+        },
+        success: function(res){
+            if(res.trim() === "OK"){
+                Swal.fire("Accepted!", "You have accepted this emergency request.", "success")
+                .then(() => { location.reload(); });
+            } else {
+                Swal.fire("Error!", res, "error");
+            }
+        }
+    });
+}
+
+document.getElementById("showRequests").addEventListener("click", function(){
+    document.getElementById("requestsSection").style.display = "block";
+    document.getElementById("appointmentsSection").style.display = "none";
+    this.classList.add("active");
+    document.getElementById("showAppointments").classList.remove("active");
+});
+
+document.getElementById("showAppointments").addEventListener("click", function(){
+    document.getElementById("requestsSection").style.display = "none";
+    document.getElementById("appointmentsSection").style.display = "block";
+    this.classList.add("active");
+    document.getElementById("showRequests").classList.remove("active");
+});
+</script>
+
+
+
+
       </div>
 
 

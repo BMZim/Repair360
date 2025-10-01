@@ -688,6 +688,131 @@ color: #d61010;
 .item3 .service-setting-content .settings-form button:hover {
   background-color: #1e4e8c;
 }
+
+.emergency-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+.emergency-details {
+    flex: 1;
+    margin-right: 15px;
+}
+.emergency-map {
+    width: 40%;
+    height: 450px;
+}
+
+.emergency-map iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 8px;
+}
+.emergency-amap {
+    width: 40%;
+    height: 200px;
+}
+.emergency-amap iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 8px;
+}
+.accept-btn {
+    padding: 8px 16px;
+    background: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.accept-btn:hover {
+    background: #218838;
+}
+.emergency-details input[type="date"],
+.emergency-details input[type="time"] {
+    width: 95%;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.emergency-details input[type="date"]:focus,
+.emergency-details input[type="time"]:focus {
+    border-color: #3182ce;
+    box-shadow: 0 0 5px rgba(49,130,206,0.4);
+    outline: none;
+}
+.emergency-toggle {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+.toggle-btn {
+    padding: 8px 16px;
+    border: none;
+    background: #e2e8f0;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: 0.3s;
+}
+.toggle-btn.active {
+    background: #3182ce;
+    color: white;
+}
+.alert-warning {
+    color:#b91c1c; background:#fee2e2; 
+    padding:10px 15px; border-left:4px solid #dc2626; 
+    border-radius:4px; font-size:14px; font-weight:500; 
+    margin-top:12px;
+}
+.appointment-card {
+  background: linear-gradient(135deg, #ffffff, #f9f9f9);
+  border: 2px solid #e3e3e3;
+  border-left: 6px solid #ff4d4f; /* Emergency highlight */
+  border-radius: 16px;
+  padding: 20px 25px;
+  margin: 20px 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.appointment-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+}
+
+.appointment-card h3 {
+  font-size: 20px;
+  margin-bottom: 15px;
+  color: #ff4d4f; /* Red for emergency */
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.appointment-card p {
+  font-size: 15px;
+  margin: 6px 0;
+  color: #333;
+}
+
+.appointment-card p strong {
+  color: #444;
+  font-weight: 600;
+}
+
       .item4{
         display: flex;
         align-items: center;

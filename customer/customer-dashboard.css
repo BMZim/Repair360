@@ -718,6 +718,31 @@ font-weight: bold;
 .item3 .emergency-content button[type="submit"]:hover {
   background-color: #c62828;
 }
+.emergency-toggle {
+    display:flex;
+    gap:10px;
+    margin-bottom:15px;
+}
+.toggle-btn {
+    padding:8px 16px;
+    border:none;
+    background:#e2e8f0;
+    cursor:pointer;
+    font-weight:bold;
+    border-radius:5px;
+    transition:0.3s;
+}
+.toggle-btn.active {
+    background:#3182ce;
+    color:white;
+}
+.appointment-card {
+    border:1px solid #ddd;
+    border-radius:8px;
+    padding:15px;
+    margin:10px 0;
+    background:#f9fafb;
+}
 .item4{
         display: flex;
         align-items: center;

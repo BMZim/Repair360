@@ -1,5 +1,5 @@
 <?php
-include 'config.php';
+include ('config.php');
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $fname = $_POST['fname'];
@@ -20,7 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->bind_param("sisssssssss", $fname, $jobid, $email, $password, $dob, $security, $answer, $gender, $division, $address, $phone);
 
     if ($stmt->execute()) {
-        echo "Signup successful! <a href='login-admin.html'>Login here</a>";
+        header("Location: login-admin.html");
     } else {
         echo "Error: " . $stmt->error;
     }

@@ -1,5 +1,5 @@
 <?php
-include 'config.php';
+include ('config.php');
 session_start();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -15,6 +15,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($stmt->num_rows > 0 && password_verify($password, $hashed_password)) {
         $_SESSION['admin_id'] = $id;
+        echo "OK";
         header("Location: admin-dashboard.html");
         exit();
     } else {

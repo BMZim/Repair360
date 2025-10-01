@@ -16,3 +16,4 @@ function showPanel(panelIndex, colorCode) {
 }
 
 showPanel(0, 'linear-gradient(90deg, #2d3a5a 80%, #1abc9c 100%)');
+
