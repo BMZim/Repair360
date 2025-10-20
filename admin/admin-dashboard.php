@@ -1,10 +1,10 @@
 <?php 
 session_start();
-$valid =$_SESSION['user_id'];
+$valid =$_SESSION['admin_id'];
 if($valid == true){
 
 }else{
-  header("location:adminlogin.php");
+  header("location:login-admin.html");
 }
 
 ?>
@@ -15,7 +15,6 @@ if($valid == true){
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-  
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="admin-dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />   
@@ -59,35 +58,124 @@ if($valid == true){
             
         </div>
         <div class="manage-user-content">
-            <table class="user-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Role</th>
-          <th>Email</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="userTableBody">
-        <!-- Users will be injected here -->
-         <td>221002561</td>
-         <td>Zim</td>
-         <td>Customer</td>
-         <td>bmjim@gmail.com</td>
-         <td>Active</td>
-         <td>
-          <button class="action-btn approve-btn" >Approve</button>
-          <button class="action-btn block-btn" >Block</button>
-          <button class="action-btn view-btn" >View</button>
-          <button class="action-btn delete-btn" >Delete</button>
-        </td>
-      </tbody>
-    </table>
-           
-          
-            </div>
+  <table class="user-table">
+    <thead style="background:#f5f5f5;">
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Role</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="userTableBody">
+      <?php
+      include("config.php");
+
+      $sql = "
+        SELECT customer_id AS id, full_name, email, phone, status, 'Customer' AS role
+        FROM customer
+        UNION ALL
+        SELECT mechanic_id AS id, full_name, email, phone, status, 'Mechanic' AS role
+        FROM mechanic
+        ORDER BY 
+          CASE 
+            WHEN status = 'Not Verified' THEN 1 
+            WHEN status = 'Verified' THEN 2 
+            ELSE 3 
+          END,
+          role ASC,
+          full_name ASC
+      ";
+
+      $result = $conn->query($sql);
+
+      if ($result && $result->num_rows > 0) {
+          while ($row = $result->fetch_assoc()) {
+              $status = htmlspecialchars($row['status']);
+              $isNotVerified = ($status === 'Not Verified');
+
+              echo "<tr>
+                      <td>{$row['id']}</td>
+                      <td>{$row['full_name']}</td>
+                      <td>{$row['role']}</td>
+                      <td>{$row['email']}</td>
+                      <td>{$row['phone']}</td>
+                      <td style='font-weight:600; color:" . 
+                        ($status === 'Verified' ? 'green' : ($status === 'Blocked' ? 'red' : 'orange')) . ";'>
+                        $status
+                      </td>
+                      <td>";
+
+              if ($isNotVerified) {
+                  echo "<button class='action-btn approve-btn' data-id='{$row['id']}' data-role='{$row['role']}'>Approve</button>";
+              }
+              
+              echo "<button class='action-btn block-btn' data-id='{$row['id']}' data-role='{$row['role']}'>Block</button>
+                    <button class='action-btn view-btn' data-id='{$row['id']}' data-role='{$row['role']}'>View</button>
+                    <button class='action-btn delete-btn' data-id='{$row['id']}' data-role='{$row['role']}'>Delete</button>
+                  </td>
+                </tr>";
+          }
+      } else {
+          echo "<tr><td colspan='7' style='text-align:center; color:#999;'>No Users Found</td></tr>";
+      }
+      ?>
+    </tbody>
+  </table>
+</div>
+<script>
+$(document).on('click', '.approve-btn', function(){
+    const id = $(this).data('id');
+    const role = $(this).data('role');
+    $.post('user_action.php', {action:'approve', id:id, role:role}, function(res){
+        if(res.trim() === 'OK'){
+            Swal.fire('Approved!', 'User verified successfully.', 'success').then(()=>location.reload());
+        } else Swal.fire('Error', res, 'error');
+    });
+});
+
+$(document).on('click', '.block-btn', function(){
+    const id = $(this).data('id');
+    const role = $(this).data('role');
+    $.post('user_action.php', {action:'block', id:id, role:role}, function(res){
+        if(res.trim() === 'OK'){
+            Swal.fire('Blocked!', 'User has been blocked.', 'warning').then(()=>location.reload());
+        } else Swal.fire('Error', res, 'error');
+    });
+});
+
+$(document).on('click', '.delete-btn', function(){
+    const id = $(this).data('id');
+    const role = $(this).data('role');
+    Swal.fire({
+        title:'Delete User?',
+        text:'This will permanently delete the account.',
+        icon:'warning',
+        showCancelButton:true,
+        confirmButtonColor:'#d33',
+        confirmButtonText:'Delete'
+    }).then(result=>{
+        if(result.isConfirmed){
+            $.post('user_action.php', {action:'delete', id:id, role:role}, function(res){
+                if(res.trim()==='OK'){
+                    Swal.fire('Deleted!','User account removed.','success').then(()=>location.reload());
+                } else Swal.fire('Error', res, 'error');
+            });
+        }
+    });
+});
+
+$(document).on('click', '.view-btn', function(){
+    const id = $(this).data('id');
+    const role = $(this).data('role');
+    window.open('view_user.php?id=' + id + '&role=' + role, '_blank');
+});
+</script>
+
+
         </div>
       <div class="tabPanel" id="tab2">
         <div class="service-manage-head">

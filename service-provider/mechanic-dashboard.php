@@ -82,7 +82,7 @@ $is_verified = mysqli_query($con, $verify);
             c.address AS customer_address,
             s.shop_name AS service_name
         FROM appointments a
-        JOIN customers c ON a.customer_id = c.customer_id
+        JOIN customer c ON a.customer_id = c.customer_id
         JOIN service s ON a.service_id = s.service_id
         WHERE a.mechanic_id = ? AND a.status = 'Pending'
         ORDER BY a.appointment_date, a.appointment_time ASC";
@@ -195,7 +195,7 @@ if ($result->num_rows > 0) {
                   ts.status AS track_status
               FROM appointments a
               JOIN service s ON a.service_id = s.service_id
-              JOIN customers c ON a.customer_id = c.customer_id
+              JOIN customer c ON a.customer_id = c.customer_id
               LEFT JOIN track_status ts ON a.appointment_id = ts.appointment_id
               WHERE a.mechanic_id = ?
                 AND (ts.status IS NULL OR ts.status != 'Completed')
@@ -294,7 +294,7 @@ $sql = "SELECT
             s.shop_name AS service_name,
             ts.status AS track_status
         FROM appointments a
-        JOIN customers c ON a.customer_id = c.customer_id
+        JOIN customer c ON a.customer_id = c.customer_id
         JOIN service s ON a.service_id = s.service_id
         LEFT JOIN track_status ts ON a.appointment_id = ts.appointment_id
         WHERE a.mechanic_id = ? 
@@ -513,7 +513,7 @@ $mechanic_id = intval($_SESSION['id']);
                      (SELECT message FROM chat_messages cm WHERE cm.appointment_id = a.appointment_id ORDER BY cm.created_at DESC LIMIT 1) AS last_message,
                      (SELECT created_at FROM chat_messages cm WHERE cm.appointment_id = a.appointment_id ORDER BY cm.created_at DESC LIMIT 1) AS last_time
               FROM appointments a
-              JOIN customers c ON a.customer_id = c.customer_id
+              JOIN customer c ON a.customer_id = c.customer_id
               WHERE a.mechanic_id = ? AND a.status = 'Confirmed'
               AND a.appointment_id NOT IN (
                   SELECT appointment_id FROM deleted_chats WHERE mechanic_id = ?
@@ -983,7 +983,7 @@ $('#mchat-input').on('keypress', function (e) {
 
       $sql = "SELECT er.id, er.customer_id, er.name, er.contact, er.location, er.service_type, er.description
               FROM emergency_requests er
-              JOIN customers c ON er.customer_id = c.customer_id
+              JOIN customer c ON er.customer_id = c.customer_id
               WHERE er.status = 'Pending'
               ORDER BY er.id DESC";
 
@@ -1034,7 +1034,7 @@ $('#mchat-input').on('keypress', function (e) {
   <?php
   $sql2 = "SELECT ea.id, ea.customer_id, c.full_name, c.phone, ea.service_type, ea.description, ea.date, ea.time
            FROM emergency_appointments ea
-           JOIN customers c ON ea.customer_id = c.customer_id
+           JOIN customer c ON ea.customer_id = c.customer_id
            WHERE ea.mechanic_id = '$mechanic_id' AND ea.status ='Confirmed'
            ORDER BY ea.id DESC";
   $res2 = mysqli_query($con, $sql2);

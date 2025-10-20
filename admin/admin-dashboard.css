@@ -127,8 +127,8 @@
     }
     
     .item3 .manage-user-content  {
-  max-width: 900px;
-  margin: 40px auto;
+  max-width: 1020px;
+  margin: 20px auto;
   padding: 30px;
   background: #fff;
   border-radius: 10px;
@@ -157,31 +157,10 @@
   background-color: #f0f2f5;
 }
 
-.item3 .manage-user-content .status {
-  padding: 6px 10px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.item3 .manage-user-content .active {
-  background-color: #d4edda;
-  color: #155724;
-}
-
-.item3 .manage-user-content .blocked {
-  background-color: #f8d7da;
-  color: #721c24;
-}
-
-.item3 .manage-user-content .pending {
-  background-color: #fff3cd;
-  color: #856404;
-}
 
 .item3 .manage-user-content .action-btn {
-  padding: 6px 12px;
-  margin-right: 5px;
+  padding: 6px 8px;
+  margin-bottom: 2px;
   border: none;
   border-radius: 6px;
   font-size: 13px;

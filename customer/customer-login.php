@@ -6,7 +6,7 @@ if (isset($_POST['submit'])) {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    $stmt = $conn->prepare("SELECT customer_id, full_name, email, phone, password FROM customers WHERE email=? OR phone=? LIMIT 1");
+    $stmt = $conn->prepare("SELECT customer_id, full_name, email, phone, password FROM customer WHERE email=? OR phone=? LIMIT 1");
     $stmt->bind_param("ss", $email, $email);
     $stmt->execute();
     $result = $stmt->get_result();

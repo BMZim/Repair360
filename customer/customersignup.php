@@ -18,7 +18,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $postal_code = $_POST['pin'];
     $email       = $_POST['email'];
     $cusid         = $_POST['cusid'];
-    $is_verified = "Not Verified";
+    $status = "Not Verified";
 
     // Hash password
     $password_hash = password_hash($password, PASSWORD_BCRYPT);
@@ -32,11 +32,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }else if($rows = mysqli_num_rows($result1)>0){
         echo "2";
     }else{
-        $stmt = $conn->prepare("INSERT INTO customers (customer_id, full_name, nid, password, dob, gender, division, address, phone, city, postal_code, email, is_verified) 
+        $stmt = $conn->prepare("INSERT INTO customer (customer_id, full_name, nid, password, dob, gender, division, address, phone, city, postal_code, email, status) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
         $stmt->bind_param("sssssssssssss", 
-        $cusid, $full_name, $nid, $password_hash, $dob, $gender, $division, $address, $phone, $city, $postal_code, $email, $is_verified);
+        $cusid, $full_name, $nid, $password_hash, $dob, $gender, $division, $address, $phone, $city, $postal_code, $email, $status);
 
         if ($stmt->execute()) {
             echo "0"   ;
