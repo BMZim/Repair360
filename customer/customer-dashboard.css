@@ -45,6 +45,11 @@
         padding-right: 20px;
         padding-top: 15px;
       }
+      .item1 .head-right button{
+        background: none;
+        border: none;
+        cursor: pointer;
+      }
       .item1 .head-right img{
         height: 40px;
         border-radius: 50px;
@@ -235,61 +240,82 @@
         color: #1a2236;
         cursor: pointer;
     }
-    .item3 .appointment-content {
-max-width: 900px;
-margin: 50px auto;
-padding: 30px;
-background-color: #ffffff;
-border-radius: 10px;
-box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+   .appointment-content {
+    width: 100%;
+    max-width: 850px;
+    margin: 30px auto;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    padding: 20px;
+    font-family: "Poppins", sans-serif;
 }
 
-.item3 .appointment-contents h2 {
-margin-bottom: 20px;
-color: #222;
+.appointments-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+    color: #333;
 }
 
-.item3 .appointments-table {
-width: 100%;
-border-collapse: collapse;
+.appointments-table thead {
+    background: #2563eb;
+    color: #fff;
 }
 
-.item3 .appointments-table th,
-.item3 .appointments-table td {
-padding: 12px 15px;
-border-bottom: 1px solid #ddd;
-text-align: left;
+.appointments-table th, 
+.appointments-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
 }
 
-.item3 .appointments-table th {
-background-color: #f4f6f9;
-color: #333;
+
+.appointments-table tr:hover {
+    background: #1c82e9;
+    transition: 0.3s;
+    color: white;
 }
 
-.item3 .status {
-font-weight: bold;
-padding: 6px 10px;
-border-radius: 5px;
+.appointments-table td.status {
+    font-weight: 600;
+    text-transform: capitalize;
+    border-radius: 8px;
 }
 
-.item3 .status.confirmed {
-background-color: #e0f7fa;
-color: #00796b;
+/* Status Colors */
+.status.pending {
+    color: #ca8a04;
+    background: #fef3c7;
+    padding: 6px 10px;
+    border-radius: 6px;
 }
 
-.item3 .status.pending {
-background-color: #fff3cd;
-color: #856404;
+.status.confirmed {
+    color: #16a34a;
+    background: #dcfce7;
+    padding: 6px 10px;
+    border-radius: 6px;
 }
 
-.item3 .status.completed {
-background-color: #d4edda;
-color: #155724;
+.status.cancelled {
+    color: #dc2626;
+    background: #fee2e2;
+    padding: 6px 10px;
+    border-radius: 6px;
 }
-.item3 .status.cancelled {
-background-color: #f0acac;
-color: #d61010;
+
+/* Responsive */
+@media (max-width: 768px) {
+    .appointments-table th, .appointments-table td {
+        font-size: 14px;
+        padding: 10px;
+    }
+    .appointment-content {
+        padding: 15px;
+    }
 }
+
 .item3 .track-service-content{
   display: flex;
   flex-direction: column;
@@ -331,6 +357,8 @@ background-color: #f9fafb;
 .item3 .status-header {
 font-size: 18px;
 margin-bottom: 10px;
+color: #e71515;
+font-weight: 600;
 }
 
 .item3 .status-info p {
@@ -367,6 +395,7 @@ border-radius: 20px;
 background-color: #e2e8f0;
 color: #333;
 font-size: 14px;
+text-align: center;
 }
 
 .item3 .status-steps li.done {
@@ -408,6 +437,14 @@ padding: 15px;
 overflow-y: auto;
 background-color: #f9fafb;
 }
+.item3 .send-sms button{
+  padding:10px 18px; border-radius:20px; border:none; background:#3182ce; color:#fff; font-weight:600; cursor:pointer;
+  transition: all .2s ease-in;
+}
+.item3 .send-sms button:hover{
+  transform: translateY(-2px);
+  background-color: #10cf59;
+}
 
 .item3 .message {
 max-width: 80%;
@@ -417,49 +454,26 @@ border-radius: 15px;
 font-size: 14px;
 line-height: 1.4;
 }
-
-.item3 .message.left {
-background-color: #e2e8f0;
-color: #333;
-align-self: flex-start;
+.item3 #customer-chat-sidebar li{
+  transition: all .2s ease-in;
+}
+.item3 #customer-chat-sidebar li:hover{
+  box-shadow: 0px 5px 15px black;
 }
 
-.item3 .message.right {
-background-color: #bee3f8;
-color: #2b6cb0;
-align-self: flex-end;
+.chat-user:hover .options-btn {
+  opacity: 1;
 }
 
-.item3 .chat-input {
-display: flex;
-padding: 10px;
-border-top: 1px solid #ddd;
-background-color: #fff;
+.options-btn {
+  opacity: 0;
+  transition: opacity 0.3s;
 }
 
-.item3 .chat-input input {
-flex: 1;
-padding: 10px 15px;
-font-size: 14px;
-border: 1px solid #ccc;
-border-radius: 25px;
-outline: none;
+.options-menu button:hover {
+  background: #f8f9fa;
 }
 
-.item3 .chat-input button {
-margin-left: 10px;
-padding: 10px 20px;
-background-color: #2b6cb0;
-color: white;
-border: none;
-border-radius: 25px;
-cursor: pointer;
-transition: background-color 0.2s;
-}
-
-.item3 .chat-input button:hover {
-background-color: #1e4e8c;
-}
 .item3 .payments-container {
 max-width: 900px;
 margin: 50px auto;

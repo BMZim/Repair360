@@ -169,8 +169,6 @@ if ($result->num_rows > 0) {
         <div class="appointment-head">
           <h2>Appointments Details</h2>
         </div>
-        
-
         <div class="appointment-content">
   <table class="schedule-table">
     <thead>
@@ -187,16 +185,20 @@ if ($result->num_rows > 0) {
       include("connection.php");
       $mechanic_id = $_SESSION['id']; // logged in mechanic id
 
+      // ✅ Exclude appointments where track_status = 'Completed'
       $sql = "SELECT 
                   s.skills AS service_name,
                   a.appointment_date,
                   a.appointment_time,
-                  a.status,
-                  c.full_name AS customer_name
+                  a.status AS appointment_status,
+                  c.full_name AS customer_name,
+                  ts.status AS track_status
               FROM appointments a
               JOIN service s ON a.service_id = s.service_id
               JOIN customers c ON a.customer_id = c.customer_id
+              LEFT JOIN track_status ts ON a.appointment_id = ts.appointment_id
               WHERE a.mechanic_id = ?
+                AND (ts.status IS NULL OR ts.status != 'Completed')
               ORDER BY a.appointment_date ASC, a.appointment_time ASC";
 
       $stmt = $con->prepare($sql);
@@ -206,25 +208,27 @@ if ($result->num_rows > 0) {
 
       if ($result->num_rows > 0) {
           while ($row = $result->fetch_assoc()) {
-              $date = date("Y-m-d", strtotime($row['appointment_date']));
-              $time = date("h:i A", strtotime($row['appointment_time']));
-              $statusClass = strtolower($row['status']); // e.g. confirmed, pending, completed
-
+              $date = htmlspecialchars(date("Y-m-d", strtotime($row['appointment_date'])));
+              $time = htmlspecialchars(date("h:i A", strtotime($row['appointment_time'])));
+              $status = htmlspecialchars($row['appointment_status']);
+              $statusClass = strtolower($status);
+              
               echo "<tr>
                       <td>" . htmlspecialchars($row['service_name']) . "</td>
                       <td>" . $date . "</td>
                       <td>" . $time . "</td>
                       <td>" . htmlspecialchars($row['customer_name']) . "</td>
-                      <td class='status {$statusClass}'>" . htmlspecialchars($row['status']) . "</td>
+                      <td class='status {$statusClass}'>" . $status . "</td>
                     </tr>";
           }
       } else {
-          echo "<tr><td colspan='5'>No Appointments Found</td></tr>";
+          echo "<tr><td colspan='5'>No Active Appointments Found</td></tr>";
       }
       ?>
     </tbody>
   </table>
-</div> 
+</div>
+
       </div>
 
       <div class="tabPanel" id="tab3">
@@ -274,11 +278,12 @@ if ($result->num_rows > 0) {
           <h2>Customer Confirmation</h2>
         </div>
         <div class="job-details-content">
-      <?php
+<?php
 include("connection.php");
 
 $mechanic_id = $_SESSION['id'];
 
+// ✅ Select only jobs that are NOT completed
 $sql = "SELECT 
             a.appointment_id,
             a.appointment_date,
@@ -292,7 +297,9 @@ $sql = "SELECT
         JOIN customers c ON a.customer_id = c.customer_id
         JOIN service s ON a.service_id = s.service_id
         LEFT JOIN track_status ts ON a.appointment_id = ts.appointment_id
-        WHERE a.mechanic_id = ? AND a.status = 'Confirmed'
+        WHERE a.mechanic_id = ? 
+          AND a.status = 'Confirmed'
+          AND (ts.status IS NULL OR ts.status != 'Completed')
         ORDER BY a.appointment_date, a.appointment_time ASC";
 
 $stmt = $con->prepare($sql);
@@ -302,50 +309,59 @@ $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
-        ?>
-        <div class="job-card">
-            <h3><?= htmlspecialchars($row['service_name']); ?></h3>
+?>
+        <div class="job-card" style="margin-bottom:20px; padding:15px; border:1px solid #ddd; border-radius:10px; background:#fff;">
+            <h3 style="margin-bottom:10px; color:#2d3748;"><?= htmlspecialchars($row['service_name']); ?></h3>
             <p><strong>Customer:</strong> <?= htmlspecialchars($row['customer_name']); ?></p>
             <p><strong>Address:</strong> <?= htmlspecialchars($row['address']); ?></p>
             <p><strong>Date & Time:</strong> <?= date("d M Y, h:i A", strtotime($row['appointment_date']." ".$row['appointment_time'])); ?></p>
             <p><strong>Description:</strong> <?= htmlspecialchars($row['description']); ?></p>
-            
-            <!-- Tracking form -->
-           <form method="post" class="track-form" 
-      style="border:1px solid #ccc; padding:15px; border-radius:8px; background:#f9f9f9; margin-top:15px; width:100%; max-width:420px; font-family:Arial, sans-serif;">
-    <input type="hidden" class="appointment_id" name="appointment_id" value="<?= $row['appointment_id']; ?>">
-    <input type="hidden" class="mechanic_id" name="mechanic_id" value="<?= $mechanic_id; ?>">
 
-    <?php if ($row['track_status'] == "" || $row['track_status'] == "Pending") { ?>
-        <label style="display:block; margin-bottom:6px; font-weight:bold; color:#333;">Estimated Arrival Time:</label>
-        <input type="datetime-local" class="estimated_arrival" name="estimated_arrival" required 
-               style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ccc; border-radius:4px;">
+            <!-- 🧭 Tracking Form -->
+            <form method="post" class="track-form" 
+                style="border:1px solid #ccc; padding:15px; border-radius:8px; background:#f9f9f9; margin-top:15px; width:100%; max-width:420px; font-family:Arial, sans-serif;">
+                
+                <input type="hidden" class="appointment_id" name="appointment_id" value="<?= $row['appointment_id']; ?>">
+                <input type="hidden" class="mechanic_id" name="mechanic_id" value="<?= $mechanic_id; ?>">
 
-        <label style="display:block; margin-bottom:6px; font-weight:bold; color:#333;">Current Status:</label>
-        <input type="text" class="current_status" name="current_status" placeholder="e.g. Traffic delay, leaving now" required
-               style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ccc; border-radius:4px;">
+                <?php if ($row['track_status'] == "" || $row['track_status'] == "Pending") { ?>
+                    <label style="display:block; margin-bottom:6px; font-weight:bold; color:#333;">Estimated Arrival Time:</label>
+                    <input type="datetime-local" class="estimated_arrival" name="estimated_arrival" required 
+                        style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ccc; border-radius:4px;">
 
-        <button type="button" class="btn-way" 
-                style="width:100%; padding:10px; border:none; border-radius:4px; background-color:#38a169; color:white; font-weight:bold; cursor:pointer; transition:all 0.3s ease;">
-            On The Way
-        </button>
-    <?php } elseif ($row['track_status'] == "On the Way") { ?>
-        <button type="button" class="btn-started" 
-                style="width:100%; padding:10px; border:none; border-radius:4px; background-color:#f6ad55; color:white; font-weight:bold; cursor:pointer; transition:all 0.3s ease;">
-            Work Started
-        </button>
-    <?php } elseif ($row['track_status'] == "Work Started") { ?>
-        <button type="button" class="btn-complete" 
-                style="width:100%; padding:10px; border:none; border-radius:4px; background-color:#3182ce; color:white; font-weight:bold; cursor:pointer; transition:all 0.3s ease;">
-            Completed
-        </button>
-    <?php } ?>
-</form>
+                    <label style="display:block; margin-bottom:6px; font-weight:bold; color:#333;">Current Status:</label>
+                    <input type="text" class="current_status" name="current_status" placeholder="e.g. Traffic delay, leaving now" required
+                        style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ccc; border-radius:4px;">
 
+                    <button type="button" class="btn-way"
+                        style="width:100%; padding:10px; border:none; border-radius:4px; background-color:#38a169; color:white; font-weight:bold; cursor:pointer;">
+                        On The Way
+                    </button>
 
+                <?php } elseif ($row['track_status'] == "On the Way") { ?>
+                    <button type="button" class="btn-started"
+                        style="width:100%; padding:10px; border:none; border-radius:4px; background-color:#f6ad55; color:white; font-weight:bold; cursor:pointer;">
+                        Work Started
+                    </button>
 
-            <script>
-               $(document).ready(function () {
+                <?php } elseif ($row['track_status'] == "Work Started") { ?>
+                    <button type="button" class="btn-complete"
+                        style="width:100%; padding:10px; border:none; border-radius:4px; background-color:#3182ce; color:white; font-weight:bold; cursor:pointer;">
+                        Completed
+                    </button>
+                <?php } ?>
+            </form>
+        </div>
+<?php
+    }
+} else {
+    echo "<p>No active (non-completed) jobs right now.</p>";
+}
+?>
+</div>
+
+<script>
+$(document).ready(function () {
     // On The Way
     $(document).on("click", ".btn-way", function () {
         let form = $(this).closest(".track-form");
@@ -362,11 +378,11 @@ if ($result->num_rows > 0) {
                 if (data.trim() === "Done") {
                     Swal.fire("Nice!", "You are on Track!!", "success").then(() => location.reload());
                 } else {
-                    Swal.fire("Opps!!", "Error occured", "error");
+                    Swal.fire("Oops!!", "Error occurred", "error");
                 }
             });
         } else {
-            Swal.fire("Opps!!", "Fill all fields!!", "error");
+            Swal.fire("Oops!!", "Fill all fields!!", "error");
         }
     });
 
@@ -381,7 +397,7 @@ if ($result->num_rows > 0) {
             if (data.trim() === "Done") {
                 Swal.fire("Nice!", "You can start your work!!", "success").then(() => location.reload());
             } else {
-                Swal.fire("Opps!!", "Error occured", "error");
+                Swal.fire("Oops!!", "Error occurred", "error");
             }
         });
     });
@@ -395,25 +411,16 @@ if ($result->num_rows > 0) {
 
         $.post("update_track_status.php", { appointment_id, mechanic_id, status }, function (data) {
             if (data.trim() === "Done") {
-                Swal.fire("Nice!", "Congratulations you completed your work!!", "success").then(() => location.reload());
+                Swal.fire("Nice!", "Congratulations, you completed your work!!", "success").then(() => location.reload());
             } else {
-                Swal.fire("Opps!!", "Error occured", "error");
+                Swal.fire("Oops!!", "Error occurred", "error");
             }
         });
     });
 });
+</script>
 
-              </script>
 
-        </div>
-        <?php
-    }
-} else {
-    echo "<p>No confirmed jobs right now.</p>";
-}
-?>
-
-      </div>
       </div>
 
       <div class="tabPanel" id="tab5">
@@ -487,30 +494,34 @@ if ($result->num_rows > 0) {
           <h2>Chat With Customer</h2>
         </div>
         <div class="chat-content">
-            <?php
-        include("connection.php");
+<?php
+include("connection.php");
 
-    if (!isset($_SESSION['id'])) {
-         echo "<p>Please login.</p>";
-        return;
-      }
-      $mechanic_id = intval($_SESSION['id']);
-      ?>
+if (!isset($_SESSION['id'])) {
+    echo "<p>Please login.</p>";
+    return;
+}
+$mechanic_id = intval($_SESSION['id']);
+?>
 
-        <div style="display:flex; height:560px; border:1px solid #ddd; border-radius:8px; overflow:hidden; font-family:Arial, sans-serif;">
-          <div id="mechanic-chat-sidebar" style="width:32%; background:#f7f8fb; border-right:1px solid #e6e6e6; overflow-y:auto;">
-            <div style="padding:12px; font-weight:700; border-bottom:1px solid #eee;">Customers (Confirmed)</div>
-            <ul id="mechanic-chat-list" style="list-style:none; margin:0; padding:0;">
-              <?php
+<div class="mchat-sidebar" style="display:flex; height:560px; border:1px solid #ddd; border-radius:8px; overflow:hidden; font-family:Arial, sans-serif;">
+  <div id="mechanic-chat-sidebar" style="width:32%; background:#f7f8fb; border-right:1px solid #e6e6e6; overflow-y:auto;">
+    <div style="padding:12px; font-weight:700; border-bottom:1px solid #eee;">Customers (Confirmed)</div>
+    <ul id="mechanic-chat-list" style="list-style:none; margin:0; padding:0;">
+      <?php
       $sql = "SELECT DISTINCT a.appointment_id, c.customer_id, c.full_name, c.avatar,
                      (SELECT message FROM chat_messages cm WHERE cm.appointment_id = a.appointment_id ORDER BY cm.created_at DESC LIMIT 1) AS last_message,
                      (SELECT created_at FROM chat_messages cm WHERE cm.appointment_id = a.appointment_id ORDER BY cm.created_at DESC LIMIT 1) AS last_time
               FROM appointments a
               JOIN customers c ON a.customer_id = c.customer_id
               WHERE a.mechanic_id = ? AND a.status = 'Confirmed'
+              AND a.appointment_id NOT IN (
+                  SELECT appointment_id FROM deleted_chats WHERE mechanic_id = ?
+              )
               ORDER BY last_time DESC, a.appointment_date DESC";
+
       $stmt = $con->prepare($sql);
-      $stmt->bind_param("i", $mechanic_id);
+      $stmt->bind_param("ii", $mechanic_id, $mechanic_id);
       $stmt->execute();
       $stmt->store_result();
       $stmt->bind_result($appointment_id, $customer_id, $customer_name, $customer_avatar, $last_message, $last_time);
@@ -519,12 +530,29 @@ if ($result->num_rows > 0) {
           $avatar = $customer_avatar ? htmlspecialchars($customer_avatar) : 'default-avatar.png';
           $snippet = $last_message ? htmlspecialchars(mb_strimwidth($last_message, 0, 40, '...')) : '';
           $time = $last_time ? date('d M H:i', strtotime($last_time)) : '';
-          echo '<li class="mchat-user" data-appointment="'.intval($appointment_id).'" data-customer="'.intval($customer_id).'" style="padding:10px; display:flex; gap:10px; align-items:center; border-bottom:1px solid #f0f0f0; cursor:pointer;">';
-          echo '<img src="uploads/'. $avatar .'" style="width:44px; height:44px; border-radius:50%; object-fit:cover;">';
-          echo '<div style="flex:1;"><div style="font-weight:600;">'.htmlspecialchars($customer_name).'</div>';
-          echo '<div style="font-size:13px; color:#666;">'. $snippet .'</div></div>';
-          echo '<div style="font-size:12px; color:#999;">'. $time .'</div>';
-          echo '</li>';
+
+          echo '<li class="mchat-user" data-appointment="'.intval($appointment_id).'" data-customer="'.intval($customer_id).'" 
+                style="padding:10px; display:flex; gap:10px; align-items:center; border-bottom:1px solid #f0f0f0; cursor:pointer; position:relative;">
+                <img src="uploads/'. $avatar .'" style="width:44px; height:44px; border-radius:50%; object-fit:cover;">
+                <div style="flex:1;">
+                  <div style="font-weight:600;">'.htmlspecialchars($customer_name).'</div>
+                  <div style="font-size:13px; color:#666;">'.$snippet.'</div>
+                </div>
+                <div style="font-size:12px; color:#999;">'.$time.'</div>
+
+                <!-- 3-dot button -->
+                <div class="chat-options" style="position:absolute; right:0px; top:-5px;">
+                  <button class="options-btn" style="background:none; border:none; font-size:18px; color:black; cursor:pointer;">⋮</button>
+                  <div class="options-menu" 
+                      style="display:none; position:absolute; right:0; top:25px; background:white; border:1px solid #ccc; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,0.15); z-index:999;">
+                      <button class="delete-chat" 
+                          data-appointment="'.intval($appointment_id).'"
+                          style="background:none; display:flex; border:none; padding:10px 12px; text-align:left; cursor:pointer; color:#d9534f; font-weight:500;">
+                           <i class="fa-solid fa-trash"></i> Delete Chat
+                      </button>
+                  </div>
+                </div>
+              </li>';
       }
       $stmt->close();
       ?>
@@ -536,9 +564,9 @@ if ($result->num_rows > 0) {
     <div id="mchat-header" style="padding:12px; border-bottom:1px solid #eee; font-weight:700;">Select a customer to chat</div>
     <div id="mchat-messages" style="flex:1; padding:12px; overflow-y:auto; background:#fefefe;"></div>
 
-    <div style="padding:10px; border-top:1px solid #eee; display:flex; gap:8px;">
+    <div class="mchat-send" style="padding:10px; border-top:1px solid #eee; display:flex; gap:8px;">
       <input id="mchat-input" type="text" placeholder="Type a message..." style="flex:1; padding:10px; border:1px solid #ddd; border-radius:20px;">
-      <button id="mchat-send" style="padding:10px 18px; border-radius:20px; border:none; background:#3182ce; color:#fff; font-weight:600; cursor:pointer;">Send</button>
+      <button id="mchat-send">Send</button>
     </div>
   </div>
 </div>
@@ -548,17 +576,53 @@ if ($result->num_rows > 0) {
 let activeAppointment = null;
 let pollInterval = null;
 
+// Toggle 3-dot menu
+$(document).on('click', '.options-btn', function(e){
+    e.stopPropagation();
+    $('.options-menu').hide();
+    $(this).siblings('.options-menu').toggle();
+});
+$(document).on('click', function(){ $('.options-menu').hide(); });
+
+// Delete chat (only if Completed)
+$(document).on('click', '.delete-chat', function(e){
+    e.stopPropagation();
+    const appointmentId = $(this).data('appointment');
+    Swal.fire({
+        title: 'Delete Chat?',
+        text: 'This will permanently delete all messages with this customer.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Delete'
+    }).then((result)=>{
+        if(result.isConfirmed){
+            $.post('chat/delete_chat_mechanic.php', { appointment_id: appointmentId }, function(res){
+                res = res.trim();
+                if(res === 'OK'){
+                    Swal.fire('Deleted!','Chat has been removed.','success')
+                    .then(()=>location.reload());
+                } else if(res === 'NOT_COMPLETED'){
+                    Swal.fire('Cannot Delete Yet!','You can only delete chats after the work is marked as Completed.','info');
+                } else {
+                    Swal.fire('Error!', res, 'error');
+                }
+            });
+        }
+    });
+});
+
 // click a customer in sidebar
 $(document).on('click', '.mchat-user', function () {
     $('.mchat-user').css('background','');
-    $(this).css('background','#eef7ff');
+    $(this).css('background','#a8f0c6ff');
     activeAppointment = $(this).data('appointment');
     const customerName = $(this).find('div > div:first').text();
     $('#mchat-header').text(customerName);
 
     loadMechanicChat();
     if (pollInterval) clearInterval(pollInterval);
-    pollInterval = setInterval(loadMechanicChat, 3000); // poll every 3s
+    pollInterval = setInterval(loadMechanicChat, 3000);
 });
 
 // load messages
@@ -578,7 +642,6 @@ $('#mchat-send').on('click', function () {
         appointment_id: activeAppointment,
         message: msg
     }, function (res) {
-        // optionally check response
         $('#mchat-input').val('');
         loadMechanicChat();
     });
@@ -591,9 +654,8 @@ $('#mchat-input').on('keypress', function (e) {
     }
 });
 </script>
+</div>
 
-
-        </div>
         </div>
 
       <div class="tabPanel" id="tab7">
@@ -850,7 +912,9 @@ $('#mchat-input').on('keypress', function (e) {
         </div>
 
         <label for="location">Coverage Area:</label>
-        <input type="text" id="coverage" placeholder="e.g. Uttara, Dhaka" required />
+        <input type="text" id="coverage" placeholder="e.g. Uttara, Dhaka" required /><br>
+        <label for="fee">Service Fee:</label>
+        <input type="number" id="service-fee" placeholder="e.g. 500/1000 Taka" required />
         <button type="submit" name="submitService" id="submitService">Save Settings</button>
     </form>
 
@@ -864,12 +928,13 @@ $('#mchat-input').on('keypress', function (e) {
                 expert = expert.replace(/,\s+/g, ',').trim();
                 var shoplocation = $('#shoplocation').text();
                 var coverage = $('#coverage').val();
+                var fee = $('#service-fee').val();
 
-                if (sname && expert && coverage !== "") {
+                if (sname && expert && coverage && fee !== "") {
                     $.ajax({
                         url: "service.php",
                         method: "POST",
-                        data: { sname, mechanic_type, skills, expert, shoplocation, coverage },
+                        data: { sname, mechanic_type, skills, expert, shoplocation, coverage, fee},
                         success: function(data) {
                             if (data.trim() == "1") {
                                 Swal.fire({title: "Nice!", text: "Service Posted", icon: "success"});

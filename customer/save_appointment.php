@@ -7,18 +7,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $mechanic_id = $_POST['mechanic_id'];
     $service_id = $_POST['service_id'];
     $description = $_POST['description'];
+    $fee = $_POST['fee'];
     $appointment_date = date('Y-m-d', strtotime($_POST['appointment_date'])); // DATE format
     $appointment_time = date('H:i:s', strtotime($_POST['appointment_time'])); // TIME format
+    $message = 'Appointment booked successfully!';
 
     $status = "Pending"; // default
 
-    $sql = "INSERT INTO appointments (customer_id, mechanic_id, service_id, appointment_date, appointment_time, status, description)
-            VALUES (?, ?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO appointments (customer_id, mechanic_id, service_id, appointment_date, appointment_time, status, description, fee)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssissss", $customer_id, $mechanic_id, $service_id, $appointment_date, $appointment_time, $status, $description);
+    $stmt->bind_param("ssissssi", $customer_id, $mechanic_id, $service_id, $appointment_date, $appointment_time, $status, $description, $fee);
 
     if ($stmt->execute()) {
+        $sql = "INSERT INTO notifications (customer_id, message) VALUES ('$customer_id', '$message')";
+        mysqli_query($conn, $sql);
         echo "<script>alert('Appointment booked successfully!'); window.location='customer-dashboard.php';</script>";
     } else {
         echo "<script>alert('Failed to book appointment. Try again!'); window.history.back();</script>";

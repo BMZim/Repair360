@@ -28,8 +28,90 @@ if($valid == true){
         <h1>Repair-360</h1>
       </div>
       <div class="head-right">
-        <a href="#"><img src="img/bell.png" alt=""></a>
-        <a href="#"><img src="img/ChatGPT Image May 1, 2025, 11_29_51 AM.png" alt=""></a>
+        <!-- Notification Button -->
+<div class="notification-wrapper" style="position:relative; display:inline-block;">
+  <button id="notif-btn" >
+    <img src="img/bell.png" alt="Notifications">
+    <span id="notif-count" 
+          style="position:absolute; top:-5px; right:-5px; background:#e02424; color:#fff; border-radius:50%; font-size:11px; padding:2px 5px; display:none;">
+      0
+    </span>
+  </button>
+
+  <!-- Popup Notification Box -->
+  <div id="notif-popup" style="
+      position:absolute;
+      top:40px;
+      right:0;
+      width:300px;
+      background:#fff;
+      border:1px solid #ddd;
+      border-radius:10px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.1);
+      display:none;
+      z-index:999;
+      overflow:hidden;">
+    <div style="background:#f8f9fa; padding:10px; font-weight:bold; border-bottom:1px solid #eee;">
+      Notifications
+    </div>
+    <div id="notif-list" style="max-height:300px; overflow-y:auto; padding:10px;">
+      <p style="color:#888; text-align:center;">Loading...</p>
+    </div>
+  </div>
+</div>
+<script>
+$(document).ready(function(){
+  const popup = $("#notif-popup");
+  const count = $("#notif-count");
+
+  $("#notif-btn").on("click", function(e){
+  e.stopPropagation();
+  popup.toggle();
+
+  if(popup.is(":visible")) {
+    loadNotifications();
+    markAsRead(); // ✅ mark them read when opened
+  }
+});
+function markAsRead(){
+  $.post("notification/notifications_mark_read.php", function(){
+    count.hide(); // ✅ remove the red badge
+  });
+}
+
+  // Hide popup on outside click
+  $(document).on("click", function(e){
+    if(!$(e.target).closest(".notification-wrapper").length){
+      popup.hide();
+    }
+  });
+
+  // Load notifications from PHP
+  function loadNotifications(){
+    $("#notif-list").html("<p style='text-align:center; color:#888;'>Loading...</p>");
+    $.get("notification/notifications_fetch.php", function(data){
+      $("#notif-list").html(data);
+    });
+  }
+
+  // Optional: refresh unread count periodically
+  function updateCount(){
+    $.get("notification/notifications_count.php", function(num){
+      if(num > 0){
+        count.text(num).show();
+      } else {
+        count.hide();
+      }
+    });
+  }
+
+  updateCount();
+  setInterval(updateCount, 15000); // every 15s
+});
+</script>
+
+
+        <button><img src="img/ChatGPT Image May 1, 2025, 11_29_51 AM.png" alt=""></button>
       </div>
       
 
@@ -72,6 +154,7 @@ $sql = "SELECT
             s.skills,
             s.expert_area,
             s.shop_location,
+            s.fee,
             COALESCE(AVG(r.rating), 0) AS avg_rating
         FROM service s
         JOIN mechanic m ON s.mechanic_id = m.mechanic_id
@@ -120,9 +203,13 @@ if ($result->num_rows > 0) {
                     <?php endforeach; ?>
                 </ul>
             </div>
+            <div class="service-cost">
+                <h3 style="color: red;">Service Cost: <?= htmlspecialchars($row['fee']);?> ৳</h3>
+                  
+            </div>
             
             <div class="hire">
-                <button class="hire-btn" onclick="openBookingModal('<?= $row['mechanic_id'] ?>', '<?= $row['service_id'] ?? '' ?>')">Hire Now</button>
+                <button class="hire-btn" onclick="openBookingModal('<?= $row['mechanic_id'] ?>', '<?= $row['service_id'] ?? '' ?>', '<?= $row['fee'] ?>')">Hire Now</button>
                 <?php if ($latitude && $longitude): ?>
                     <button class="hire-btn" onclick="showLocation(<?= $latitude ?>, <?= $longitude ?>)">Location</button>
                 <?php endif; ?>
@@ -150,6 +237,8 @@ if ($result->num_rows > 0) {
     <form id="bookingForm" method="POST" action="save_appointment.php">
       <input type="hidden" name="mechanic_id" id="mechanic_id">
       <input type="hidden" name="service_id" id="service_id">
+      <input type="hidden" name="fee" id="fee">
+      
       
       <label>Select Date:</label>
       <input type="date" name="appointment_date" required><br>
@@ -200,10 +289,11 @@ if ($result->num_rows > 0) {
 .confirm-btn:hover { background: #218838; }
 </style>
 <script>
-function openBookingModal(mechanicId, serviceId) {
+function openBookingModal(mechanicId, serviceId, fee) {
     document.getElementById("bookingModal").style.display = "block";
     document.getElementById("mechanic_id").value = mechanicId;
     document.getElementById("service_id").value = serviceId;
+    document.getElementById("fee").value = fee;
 }
 function closeModal() {
     document.getElementById("bookingModal").style.display = "none";
@@ -241,15 +331,20 @@ function showLocation(lat, lng) {
         <tbody>
             <?php
             include("db.php");
-            
-            $customer_id = $_SESSION['customer_id']; // Assuming logged-in customer
 
+            $customer_id = $_SESSION['customer_id']; // Logged-in customer
+
+            // ✅ Exclude completed appointments
             $sql = "SELECT a.appointment_id, s.skills AS service_name, 
-                           a.appointment_date, a.appointment_time, a.status
+                           a.appointment_date, a.appointment_time, a.status,
+                           ts.status AS track_status
                     FROM appointments a
                     JOIN service s ON a.service_id = s.service_id
-                    WHERE a.customer_id = ?";
-            
+                    LEFT JOIN track_status ts ON a.appointment_id = ts.appointment_id
+                    WHERE a.customer_id = ?
+                      AND (ts.status IS NULL OR ts.status != 'Completed')
+                    ORDER BY a.appointment_date DESC, a.appointment_time DESC";
+
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("s", $customer_id);
             $stmt->execute();
@@ -261,17 +356,18 @@ function showLocation(lat, lng) {
                     echo "<tr>
                             <td>" . htmlspecialchars($row['service_name']) . "</td>
                             <td>" . htmlspecialchars($row['appointment_date']) . "</td>
-                            <td>" . date("h:i A", strtotime($row['appointment_time'])) . "</td>
+                            <td>" . date('h:i A', strtotime($row['appointment_time'])) . "</td>
                             <td class='status {$statusClass}'>" . htmlspecialchars($row['status']) . "</td>
                           </tr>";
                 }
             } else {
-                echo "<tr><td colspan='4'>No Appointments Found</td></tr>";
+                echo "<tr><td colspan='4'>No Active Appointments Found</td></tr>";
             }
             ?>
         </tbody>
     </table>
 </div>
+
 
         
       </div>
@@ -285,10 +381,13 @@ include("db.php");
 
 $customer_id = $_SESSION['customer_id'];
 
-// Get only Pending or Confirmed appointments
-$sql1 = "SELECT appointment_id, status 
-         FROM appointments 
-         WHERE customer_id = ? AND status IN ('Pending', 'Confirmed')";
+// ✅ Get only active (Pending/Confirmed) appointments and exclude Completed ones
+$sql1 = "SELECT a.appointment_id, a.status, ts.status AS track_status
+         FROM appointments a
+         LEFT JOIN track_status ts ON a.appointment_id = ts.appointment_id
+         WHERE a.customer_id = ?
+           AND a.status IN ('Pending', 'Confirmed')
+           AND (ts.status IS NULL OR ts.status != 'Completed')";
 $stmt1 = $conn->prepare($sql1);
 $stmt1->bind_param("i", $customer_id);
 $stmt1->execute();
@@ -299,6 +398,7 @@ if ($res1->num_rows > 0) {
         $appointment_id = $row1['appointment_id'];
         $appt_status    = $row1['status'];
 
+        // ✅ Get appointment + mechanic + tracking details
         $sql = "SELECT 
                     s.skills AS service_name,
                     m.full_name AS mechanic_name,
@@ -321,7 +421,6 @@ if ($res1->num_rows > 0) {
             $service = htmlspecialchars($row['service_name']);
             $mechanic = htmlspecialchars($row['mechanic_name']);
             $phone = htmlspecialchars($row['phone']); 
-            
             $arrival = $row['estimated_arrival'] ?? "Not Set";
             $current_status = $row['current_status'] ?? "Not Updated";
             $track_status = $row['track_status'] ?? "";
@@ -331,7 +430,7 @@ if ($res1->num_rows > 0) {
             <div class="track-data">
                 <div class="status-card">
                   <div class="status-header">
-                    <strong>Service:</strong> <?= $service; ?>
+                    Service: <?= $service; ?>
                   </div>
                   <div class="status-info">
                     <p><strong>Technician:</strong> <?= $mechanic; ?></p>
@@ -358,10 +457,10 @@ if ($res1->num_rows > 0) {
                     <iframe id="mapFrame-<?= $appointment_id ?>" 
                             src="" 
                             width="100%" height="200" 
-                            style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                            style="border:0; border-radius:8px;" allowfullscreen="" loading="lazy"></iframe>
                     
                     <button id="mapBtn-<?= $appointment_id ?>" 
-                            style="margin-top:10px; padding:8px 15px; border:none; border-radius:6px; background:#3182ce; color:white; font-weight:bold; cursor:pointer;">
+                            style="margin-top:10px; padding:8px 15px; border:none; border-radius:6px; background:#2563eb; color:white; font-weight:bold; cursor:pointer; transition:0.3s;">
                         See Location in Map
                     </button>
                 </div>
@@ -398,6 +497,7 @@ if ($res1->num_rows > 0) {
 }
 ?>
 </div>
+
       </div>
 
 
@@ -405,69 +505,142 @@ if ($res1->num_rows > 0) {
         <div class="chat-head">
           <h2>Support Center</h2>
         </div>
-        <div class="chat-content" style="display:flex; height:600px; border:1px solid #ccc; border-radius:8px; font-family:Arial, sans-serif;">
+        <div class="chat-content">
+<?php
+include("db.php");
 
-    <!-- LEFT SIDEBAR (Mechanics List) -->
-    <div class="chat-sidebar" style="width:30%; border-right:1px solid #ddd; background:#f7f7f7; overflow-y:auto;">
-        <div style="padding:10px; font-weight:bold;">Chats</div>
-        <ul style="list-style:none; padding:0; margin:0;">
-        <?php
-        include("db.php");
-        $customer_id = $_SESSION['customer_id'];
+if (!isset($_SESSION['customer_id'])) {
+    echo "<p>Please login.</p>";
+    return;
+}
+$customer_id = intval($_SESSION['customer_id']);
+?>
 
-        // Mechanics for confirmed appointments
-        $sql = "SELECT DISTINCT m.mechanic_id, m.full_name, m.avatar, a.appointment_id
-                FROM appointments a
-                JOIN mechanic m ON a.mechanic_id = m.mechanic_id
-                WHERE a.customer_id = ? AND a.status='Confirmed'";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $customer_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
+<div style="display:flex; height:560px; border:1px solid #ddd; border-radius:8px; overflow:hidden; font-family:Arial, sans-serif;">
 
-        while($row = $result->fetch_assoc()) {
-            ?>
-            <li class="chat-user" data-appointment="<?= $row['appointment_id']; ?>" 
-                data-mechanic="<?= $row['mechanic_id']; ?>" 
-                style="padding:10px; cursor:pointer; display:flex; align-items:center; gap:10px; border-bottom:1px solid #eee;">
-                <img src="uploads/<?= htmlspecialchars($row['avatar']); ?>" alt="" style="width:40px; height:40px; border-radius:50%;">
-                <span><?= htmlspecialchars($row['full_name']); ?></span>
-            </li>
-            <?php
-        }
-        ?>
-        </ul>
+  <!-- LEFT: Mechanics List -->
+  <div id="customer-chat-sidebar" style="width:32%; background:#f7f8fb; border-right:1px solid #e6e6e6; overflow-y:auto; position:relative;">
+    <div style="padding:12px; font-weight:700; border-bottom:1px solid #eee;">Technicians (Confirmed)</div>
+    <ul id="customer-chat-list" style="list-style:none; margin:0; padding:0;">
+      <?php
+      $sql = "SELECT DISTINCT a.appointment_id, m.mechanic_id, m.full_name, m.avatar,
+               (SELECT message FROM chat_messages cm WHERE cm.appointment_id = a.appointment_id ORDER BY cm.created_at DESC LIMIT 1) AS last_message,
+               (SELECT created_at FROM chat_messages cm WHERE cm.appointment_id = a.appointment_id ORDER BY cm.created_at DESC LIMIT 1) AS last_time
+        FROM appointments a
+        JOIN mechanic m ON a.mechanic_id = m.mechanic_id
+        WHERE a.customer_id = ?
+          AND a.status = 'Confirmed'
+          AND a.appointment_id NOT IN (
+              SELECT appointment_id FROM deleted_chats WHERE customer_id = ?
+          )
+        ORDER BY last_time DESC, a.appointment_date DESC";
+
+
+
+      $stmt = $conn->prepare($sql);
+      $stmt->bind_param("ii", $customer_id, $customer_id);
+      $stmt->execute();
+      $stmt->store_result();
+      $stmt->bind_result($appointment_id, $mechanic_id, $mechanic_name, $mechanic_avatar, $last_message, $last_time);
+
+      while ($stmt->fetch()) {
+          $avatar = $mechanic_avatar ? htmlspecialchars($mechanic_avatar) : 'default-avatar.png';
+          $snippet = $last_message ? htmlspecialchars(mb_strimwidth($last_message, 0, 40, '...')) : '';
+          $time = $last_time ? date('d M H:i', strtotime($last_time)) : '';
+
+          echo '<li class="chat-user" data-appointment="'.intval($appointment_id).'" data-mechanic="'.intval($mechanic_id).'" 
+                    style="padding:10px; display:flex; gap:10px; align-items:center; border-bottom:2px solid #f0f0f0; cursor:pointer; position:relative;">
+                    <img src="uploads/'. $avatar .'" style="width:44px; height:44px; border-radius:50%; object-fit:cover;">
+                    <div style="flex:1;">
+                      <div style="font-weight:600;">'.htmlspecialchars($mechanic_name).'</div>
+                      <div style="font-size:13px; color:#666;">'.$snippet.'</div>
+                    </div>
+                    <div style="font-size:12px; color:#999;">'.$time.'</div>
+
+                    <!-- 3-dot menu -->
+                    <div class="chat-options" style="position:absolute; right:0px; top:0px;">
+                      <button class="options-btn" style="background:none; border:none; font-size:18px; color:black; cursor:pointer;">⋮</button>
+                      <div class="options-menu" 
+                          style="display:none;  position:absolute; right: 0; top:25px; background:white; border:1px solid #ccc; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,0.15); z-index:999;">
+                          <button class="delete-chat" 
+                              data-appointment="'.intval($appointment_id).'"
+                              style="background:none; display:flex; border:none; padding: 10px 12px;  text-align:left; cursor:pointer; color:#d9534f; font-weight:500;">
+                               <i class="fa-solid fa-trash"></i> Delete Chat
+                          </button>
+                      </div>
+                    </div>
+                  </li>';
+      }
+      $stmt->close();
+      ?>
+    </ul>
+  </div>
+
+  <!-- RIGHT: Chat Window -->
+  <div style="flex:1; display:flex; flex-direction:column; background:#fff;">
+    <div id="chat-header" style="padding:12px; border-bottom:1px solid #eee; font-weight:700;">Select a technician to chat</div>
+    <div id="chat-messages" style="flex:1; padding:12px; overflow-y:auto; background:#fefefe;"></div>
+
+    <div class="send-sms" style="padding:10px; border-top:1px solid #eee; display:flex; gap:8px;">
+      <input id="chat-input" type="text" placeholder="Type a message..." 
+             style="flex:1; padding:10px; border:1px solid #ddd; border-radius:20px;">
+      <button id="chat-send" 
+              >
+        Send
+      </button>
     </div>
-
-    <!-- RIGHT CHAT WINDOW -->
-    <div class="chat-window" style="flex:1; display:flex; flex-direction:column;">
-        <div class="chat-header" style="padding:10px; border-bottom:1px solid #ddd; font-weight:bold;">
-            Select a mechanic to start chat
-        </div>
-        <div class="chat-messages" id="chat-messages" style="flex:1; padding:15px; overflow-y:auto; background:#fff;">
-            <!-- Messages will load here -->
-        </div>
-        <div class="chat-input" style="padding:10px; border-top:1px solid #ddd; display:flex; gap:10px;">
-            <input type="text" id="chat-message" placeholder="Type your message..." 
-                   style="flex:1; padding:10px; border:1px solid #ccc; border-radius:20px;">
-            <button id="send-btn" style="padding:10px 20px; border:none; border-radius:20px; background:#4a90e2; color:white; cursor:pointer;">
-                Send
-            </button>
-        </div>
-    </div>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  </div>
+</div>
 <script>
 let activeAppointment = null;
-let mechanicId = null;
+let pollInterval = null;
 
-// Load chat messages when user clicks a mechanic
+$(document).on('click', '.options-btn', function(e){
+    e.stopPropagation();
+    $('.options-menu').hide(); // hide others
+    $(this).siblings('.options-menu').toggle();
+});
+
+$(document).on('click', function(){
+    $('.options-menu').hide();
+});
+
+$(document).on('click', '.delete-chat', function(e){
+    e.stopPropagation();
+    const appointmentId = $(this).data('appointment');
+    Swal.fire({
+        title: 'Delete Chat?',
+        text: 'This will permanently delete all messages with this technician.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Delete'
+    }).then((result)=>{
+        if(result.isConfirmed){
+            $.post('chat/delete_chat.php', { appointment_id: appointmentId }, function(res){
+                res = res.trim();
+                if(res === 'OK'){
+                    Swal.fire('Deleted!','Chat has been removed.','success')
+                    .then(()=>location.reload());
+                } else if(res === 'NOT_COMPLETED'){
+                    Swal.fire('Cannot Delete Yet!','You can only delete chats after the work is marked as Completed.','info');
+                } else {
+                    Swal.fire('Error!', res, 'error');
+                }
+            });
+        }
+    });
+});
+
 $(".chat-user").on("click", function(){
+  $('.chat-user').css('background','');
+    $(this).css('background','#a8f0c6ff');
     activeAppointment = $(this).data("appointment");
-    mechanicId = $(this).data("mechanic");
-    $(".chat-header").text($(this).find("span").text());
+     const mechanicName = $(this).find('div > div:first').text();
+    $('#chat-header').text(mechanicName);
 
     loadMessages();
-    setInterval(loadMessages, 5000); // refresh every 5s
+    setInterval(loadMessages, 3000); // refresh every 3s
 });
 
 // Load messages via AJAX
@@ -480,26 +653,36 @@ function loadMessages(){
 }
 
 // Send message
-$("#send-btn").on("click", function(){
-    let msg = $("#chat-message").val();
-    if(msg.trim()=="" || !activeAppointment) return;
+$("#chat-send").on("click", function(){
+    let msg = $("#chat-input").val().trim();  // ✅ fixed: was #chat-message
+    if(msg === "" || !activeAppointment) return;
 
     $.post("chat/send_chat.php", {
         appointment_id: activeAppointment,
         sender_type: "customer",
         sender_id: <?= $customer_id ?>,
         message: msg
-    }, function(){
-        $("#chat-message").val("");
+    }, function(res){
+        $("#chat-input").val("");  // ✅ clear input correctly
         loadMessages();
     });
 });
-</script>
 
+// Send with Enter key
+$('#chat-input').on('keypress', function(e){
+    if(e.which === 13 && !e.shiftKey){
+        e.preventDefault();
+        $('#chat-send').click();
+    }
+});
+</script>
 </div>
 
 
+
       </div>
+
+
       <div class="tabPanel">
         <div class="payment-head">
           <h2>Payment Invoices</h2>
@@ -554,9 +737,90 @@ $("#send-btn").on("click", function(){
           <h2>Pay Bill</h2>
         </div>
         <div class="paybill-content">
+  <?php
+  include("db.php");
+  $customer_id = $_SESSION['customer_id'];
 
+  // Fetch all services whose status = 'Completed' in track_status
+  $sql = "SELECT a.appointment_id, s.skills AS service_name, ts.status AS track_status, 
+                 -- you may have price stored in appointments or a service_fees table
+                 a.fee, m.full_name AS mechanic_name
+          FROM appointments a
+          JOIN track_status ts ON a.appointment_id = ts.appointment_id
+          JOIN service s ON a.service_id = s.service_id
+          JOIN mechanic m ON a.mechanic_id = m.mechanic_id
+          WHERE a.customer_id = ? AND ts.status = 'Completed'";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param("i", $customer_id);
+  $stmt->execute();
+  $res = $stmt->get_result();
 
-        </div>
+  if ($res && $res->num_rows > 0) {
+    while ($row = $res->fetch_assoc()) {
+      ?>
+      <div class="payable-card" data-appointment="<?= $row['appointment_id']; ?>"
+           data-service="<?= htmlspecialchars($row['service_name']); ?>"
+           data-fee="<?= $row['fee']; ?>"
+           data-mechanic="<?= htmlspecialchars($row['mechanic_name']); ?>">
+        <p><strong>Service:</strong> <?= htmlspecialchars($row['service_name']); ?></p>
+        <p><strong>Mechanic:</strong> <?= htmlspecialchars($row['mechanic_name']); ?></p>
+        <p><strong>Fee:</strong> BDT <?= number_format($row['fee'],2); ?></p>
+        <button class="btn-pay">Pay Now</button>
+      </div>
+      <?php
+    }
+  } else {
+    echo "<p>No services pending payment.</p>";
+  }
+  ?>
+</div>
+
+<!-- Popup modal (hidden by default) -->
+<div id="paymentModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+     background: rgba(0,0,0,0.5); justify-content:center; align-items:center;">
+  <div style="background:#fff; padding:20px; border-radius:8px; max-width:400px; width:90%;">
+    <h3>Confirm Payment</h3>
+    <p id="modalService"></p>
+    <p id="modalMechanic"></p>
+    <p id="modalFee"></p>
+    <button id="btnProceedPay">Proceed to Pay</button>
+    <button id="btnCancelPay">Cancel</button>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function(){
+  let selected = {};
+
+  $(".btn-pay").on("click", function(){
+    let card = $(this).closest(".payable-card");
+    selected.appointment = card.data("appointment");
+    selected.service = card.data("service");
+    selected.fee = card.data("fee");
+    selected.mechanic = card.data("mechanic");
+
+    $("#modalService").text("Service: " + selected.service);
+    $("#modalMechanic").text("Mechanic: " + selected.mechanic);
+    $("#modalFee").text("Payable Amount: BDT " + parseFloat(selected.fee).toFixed(2));
+
+    $("#paymentModal").css("display", "flex");
+  });
+
+  $("#btnCancelPay").on("click", function(){
+    $("#paymentModal").hide();
+  });
+
+  $("#btnProceedPay").on("click", function(){
+    // open payment page in new tab
+    let url = "pay_gateway.php?appointment=" + selected.appointment
+            + "&fee=" + selected.fee;
+    window.open(url, "_blank");
+    $("#paymentModal").hide();
+  });
+});
+</script>
+
       </div>
       <div class="tabPanel">
         <div class="reviews-head">

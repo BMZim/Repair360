@@ -8,7 +8,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $status = $_POST['status'];
     $current_status = !empty($_POST['current_status']) ? $_POST['current_status'] : null;
 
-    // Check if track_status already exists for this appointment
     $check = $con->prepare("SELECT track_id FROM track_status WHERE appointment_id = ?");
     $check->bind_param("i", $appointment_id);
     $check->execute();

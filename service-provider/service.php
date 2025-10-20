@@ -9,9 +9,10 @@ $skills = $_POST['skills'];
 $expert = $_POST['expert'];
 $location = $_POST['shoplocation'];
 $coverage = $_POST['coverage'];
+$fee = $_POST['fee'];
 
 
-$sql = "insert into service values('', '$id', '$sname', '$mechanic_type', '$skills', '$expert', '$location', '$coverage')";
+$sql = "insert into service values('', '$id', '$sname', '$mechanic_type', '$skills', '$expert', '$location', '$coverage', '$fee')";
 
 $result = mysqli_query($con, $sql);
 

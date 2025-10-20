@@ -15,7 +15,8 @@ $stmt->store_result();
 $stmt->bind_result($sender_type, $message, $created_at);
 
 $html = '';
-while ($stmt->fetch()) {
+if($stmt->num_rows>0){
+    while ($stmt->fetch()) {
     if ($sender_type === 'mechanic') {
         // mechanic messages on right (blue)
         $html .= '<div style="text-align:right; margin:8px 0;">';
@@ -33,3 +34,7 @@ while ($stmt->fetch()) {
 $stmt->close();
 
 echo $html;
+}else{
+     echo "<p style='text-align:center; color:#777; font-size:14px;'>No messages yet. Start the conversation!</p>";
+}
+
