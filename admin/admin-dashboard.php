@@ -83,7 +83,8 @@ if($valid == true){
         ORDER BY 
           CASE 
             WHEN status = 'Not Verified' THEN 1 
-            WHEN status = 'Verified' THEN 2 
+            WHEN status = 'Verified' THEN 2
+            WHEN status = 'New User' THEN 2
             ELSE 3 
           END,
           role ASC,
@@ -181,43 +182,117 @@ $(document).on('click', '.view-btn', function(){
         <div class="service-manage-head">
           <h2>Service Management Details</h2>
         </div>
-        <div class="service-manage-content">
-               <form id="serviceFormSearch">
-                <input type="text" id="searchService" placeholder="Search a service" required />
-      <button type="submit">Search</button>
-    </form>
-    <form action="#" id="serviceForm">
-      <select id="service_type" name="service_type">
-        <option value="">Home</option>
-        <option value="">Vehicle</option>
-        <option value="">Tech</option>
-      </select>
-      <input type="text" id="serviceName" placeholder="Service Name (e.g., AC Repair)" required />
-      <button type="submit">Add Service</button>
-    </form>
+        
+<div class="service-manage-content" style="font-family:Arial; padding:20px;">
+  <!-- Search Form -->
+  <form id="serviceFormSearch" style="margin-bottom:15px;">
+    <input type="text" id="searchService" placeholder="Search by ID, Type or Name">
+    <button type="submit">Search</button>
+  </form>
 
-    <!-- Service Table -->
-    <table class="service-table">
-      <thead>
-        <tr>
-          <th>Service ID</th>
-          <th>Service Type</th>
-          <th>Service Name</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="serviceTableBody">
-        <!-- Service items will appear here -->
-         <td>12345</td>
-         <td>Home</td>
-      <td>TV Repair</td>
-      <td>
-        <button class="action-btn edit-btn">Edit</button>
-        <button class="action-btn delete-btn">Delete</button>
-      </td>
-      </tbody>
-    </table>
-        </div>
+  <!-- Add Form -->
+  <form id="serviceForm" style="margin-bottom:20px;">
+    <select id="service_type" name="service_type" required 
+            style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+      <option value="" disabled selected>Select Type</option>
+      <option value="Home">Home</option>
+      <option value="Vehicle">Vehicle</option>
+      <option value="Tech">Tech</option>
+    </select>
+    <input type="text" id="serviceName" placeholder="Service Name (e.g., AC Repair)" required />
+    <button type="submit">Add Service</button>
+  </form>
+
+  <table class="service-table">
+    <thead>
+      <tr>
+        <th >ID</th>
+        <th >Service Type</th>
+        <th >Service Name</th>
+        <th >Actions</th>
+      </tr>
+    </thead>
+    <tbody id="serviceTableBody">
+      
+    </tbody>
+  </table>
+</div>
+<script>
+
+function loadServices(query='') {
+  $.get('service_manage_action.php', {action:'fetch', query}, function(data){
+    $('#serviceTableBody').html(data);
+  });
+}
+loadServices(); // initial load
+
+// Add Service
+$('#serviceForm').on('submit', function(e){
+  e.preventDefault();
+  const type = $('#service_type').val();
+  const name = $('#serviceName').val();
+  if(!type || !name.trim()) return alert('Please fill all fields');
+
+  $.post('service_manage_action.php', {action:'add', service_type:type, service_name:name}, function(res){
+    if(res.trim() === 'OK'){
+      Swal.fire({
+  title: "Good job!",
+  text: "Service Added",
+  icon: "success"
+});
+      $('#serviceName').val('');
+      loadServices();
+    } else alert(res);
+  });
+});
+
+// Search Service
+$('#serviceFormSearch').on('submit', function(e){
+  e.preventDefault();
+  const q = $('#searchService').val().trim();
+  loadServices(q);
+});
+
+// Edit Service
+$(document).on('click','.edit-btn-ser',function(){
+  const id = $(this).data('id');
+  const currentType = $(this).data('type');
+  const currentName = $(this).data('name');
+  const newType = prompt('Edit Service Type:', currentType);
+  if(newType === null) return;
+  const newName = prompt('Edit Service Name:', currentName);
+  if(newName === null) return;
+  Swal.fire({
+  title: "Good job!",
+  text: "Service Updated",
+  icon: "success"
+});
+  $.post('service_manage_action.php',{action:'edit', service_id:id, service_type:newType, service_name:newName},function(res){
+    if(res.trim()==='OK'){
+      
+      loadServices();
+    } else alert(res);
+  });
+});
+
+// Delete Service
+$(document).on('click','.delete-btn-ser',function(){
+  const id = $(this).data('id');
+  if(confirm('Are you sure you want to delete this service?')){
+    $.post('service_manage_action.php',{action:'delete', service_id:id},function(res){
+      if(res.trim()==='OK'){
+        Swal.fire({
+      title: "Good job!",
+      text: " Deleted Successfully",
+      icon: "success"
+    });
+        loadServices();
+      } else alert(res);
+    });
+  }
+});
+</script>
+
         
       </div>
       <div class="tabPanel">
@@ -225,35 +300,99 @@ $(document).on('click', '.view-btn', function(){
           <h2>Booking Overview Details</h2>
         </div>
         <div class="booking-content">
-           <table class="booking-table">
-      <thead>
-        <tr>
-          <th>Service ID</th>
-          <th>Date</th>
-          <th>Customer</th>
-          <th>Service</th>
-          <th>Provider</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="bookingTableBody">
-        <!-- Bookings will appear here -->
-         <td>12345</td>
-          <td>17 July 2025</td>
-      <td>Zim</td>
-      <td>Tv Repair</td>
-      <td>Chinmoy</td>
-      <td><span class="badge">Pending</span></td>
-      <td>
-        <button class="action-btn view-btn" >View</button>
-        <button class="action-btn cancel-btn">Cancel</button>
-      </td>
-      </tbody>
-    </table>
-          
-        </div>
+  <!-- 🔍 Search Box -->
+  <form id="searchBookingForm" style="margin-bottom:15px;">
+    <input type="text" id="searchBooking" placeholder="Search by Customer, Mechanic, or Service ID..." 
+           style="padding:8px 12px; width:250px; border:1px solid #ccc; border-radius:5px;">
+    <button type="submit" style="padding:8px 14px; border:none; background:#007bff; color:white; border-radius:5px; cursor:pointer;">Search</button>
+  </form>
+
+  <table class="booking-table">
+    <thead>
+      <tr>
+        <th>Service ID</th>
+        <th>Date</th>
+        <th>Customer</th>
+        <th>Service</th>
+        <th>Provider</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="bookingTableBody">
+      <?php
+      include("config.php");
+
+      $sql = "SELECT 
+                a.appointment_id, a.appointment_date, a.appointment_time, a.status, a.description,
+                c.customer_id, c.full_name AS customer_name,
+                m.mechanic_id, m.full_name AS mechanic_name,
+                s.service_id, s.skills AS service_name
+              FROM appointments a
+              JOIN customer c ON a.customer_id = c.customer_id
+              JOIN mechanic m ON a.mechanic_id = m.mechanic_id
+              JOIN service s ON a.service_id = s.service_id
+              ORDER BY a.appointment_date DESC";
+
+      $result = $conn->query($sql);
+      if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+          echo "<tr>
+                  <td>" . htmlspecialchars($row['service_id']) . "</td>
+                  <td>" . date('d M Y', strtotime($row['appointment_date'])) . "</td>
+                  <td>" . htmlspecialchars($row['customer_name']) . "</td>
+                  <td>" . htmlspecialchars($row['service_name']) . "</td>
+                  <td>" . htmlspecialchars($row['mechanic_name']) . "</td>
+                  <td><span class='badge ".strtolower($row['status'])."'>".htmlspecialchars($row['status'])."</span></td>
+                  <td>
+                    <button class='action-btn view-btn' onclick=\"window.open('view_booking.php?id={$row['appointment_id']}', '_blank')\">View</button>
+                    <button class='action-btn cancel-btn' data-id='{$row['appointment_id']}'>Cancel</button>
+                  </td>
+                </tr>";
+        }
+      } else {
+        echo "<tr><td colspan='7' style='text-align:center;'>No bookings found</td></tr>";
+      }
+      ?>
+    </tbody>
+  </table>
+</div>
+
+<script>
+// 🔍 Handle search
+$('#searchBookingForm').on('submit', function(e){
+  e.preventDefault();
+  const query = $('#searchBooking').val().trim();
+
+  $.ajax({
+    url: 'search_booking.php',
+    method: 'GET',
+    data: { q: query },
+    success: function(res){
+      $('#bookingTableBody').html(res);
+    }
+  });
+});
+
+// 🗑 Cancel button
+$(document).on('click', '.cancel-btn', function(){
+  const id = $(this).data('id');
+  if(confirm('Are you sure you want to cancel this booking?')){
+    $.post('booking_action.php', {action: 'cancel', id: id}, function(res){
+      if(res.trim() === 'OK'){
+        alert('Booking cancelled successfully.');
+        location.reload();
+      } else {
+        alert('Error: ' + res);
+      }
+    });
+  }
+});
+</script>
+
       </div>
+
+
       <div class="tabPanel">
         <div class="analytics-head">
           <h2>Analytics Dashboard</h2>

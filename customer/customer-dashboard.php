@@ -70,23 +70,21 @@ $(document).ready(function(){
 
   if(popup.is(":visible")) {
     loadNotifications();
-    markAsRead(); // ✅ mark them read when opened
+    markAsRead(); 
   }
 });
 function markAsRead(){
   $.post("notification/notifications_mark_read.php", function(){
-    count.hide(); // ✅ remove the red badge
+    count.hide(); 
   });
 }
 
-  // Hide popup on outside click
   $(document).on("click", function(e){
     if(!$(e.target).closest(".notification-wrapper").length){
       popup.hide();
     }
   });
 
-  // Load notifications from PHP
   function loadNotifications(){
     $("#notif-list").html("<p style='text-align:center; color:#888;'>Loading...</p>");
     $.get("notification/notifications_fetch.php", function(data){
@@ -94,7 +92,6 @@ function markAsRead(){
     });
   }
 
-  // Optional: refresh unread count periodically
   function updateCount(){
     $.get("notification/notifications_count.php", function(num){
       if(num > 0){

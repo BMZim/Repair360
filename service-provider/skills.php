@@ -1,3 +1,52 @@
+<?php
+session_start();
+include('connection.php');
+
+$mechanic_id = "252780";
+$mechanic_type = "Home";
+
+if (!$mechanic_id || !$mechanic_type) {
+    echo "<h3 style='color:red;text-align:center;'>Mechanic ID or Type not found in session!</h3>";
+    exit();
+}
+
+
+$skill_query = "SELECT service_name FROM service_skills WHERE service_type = ?";
+$stmt = $con->prepare($skill_query);
+$stmt->bind_param("s", $mechanic_type);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$skills = [];
+while ($row = $result->fetch_assoc()) {
+    $skills[] = $row['service_name'];
+}
+
+$stmt->close();
+
+if (isset($_POST['submit'])) {
+    $selected_skills = isset($_POST['skills']) ? $_POST['skills'] : [];
+
+    if (empty($selected_skills)) {
+        echo "<script>alert('Please select at least one skill!');</script>";
+    } else {
+        $skills_str = implode(',', $selected_skills);
+
+        $sql = "INSERT INTO mechanic_skills (mechanic_id, mechanic_type, skill_name) 
+                VALUES ('$mechanic_id', '$mechanic_type', '$skills_str')";
+        $done = mysqli_query($con, $sql);
+
+        if ($done) {
+            echo "<script>alert('Skills saved successfully!'); 
+                  window.location.href='mechanic_login.php';</script>";
+            exit();
+        } else {
+            echo "Error: " . mysqli_error($con);
+        }
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,9 +72,11 @@
   }
   .skill-box h2{
     text-align: left;
+    color: #333;
   }
   .skill-box h3{
     text-align: left;
+    color: #555;
   }
   label {
     display: block;
@@ -49,92 +100,29 @@
     background-color: #43e08a;
     transform: translateY(-3px);
   }
-
-  
 </style>
 </head>
 <body>
 
 <div class="skill-box">
-  <h2 id="title">Select Skills</h2>
+  <h2>Select <?= htmlspecialchars($mechanic_type) ?> Skills</h2>
   <form id="skillsForm" method="POST">
-    <h3 id="mecid" style="color: red;">Your Mechanic ID:</h3>
-    <div id="skillsContainer"></div>
+    <h3 style="color: red;">Your Mechanic ID: <?= htmlspecialchars($mechanic_id) ?></h3>
+    <div id="skillsContainer">
+      <?php
+      if (!empty($skills)) {
+          foreach ($skills as $skill) {
+              echo '<label><input type="checkbox" name="skills[]" value="'.htmlspecialchars($skill).'"> '.htmlspecialchars($skill).'</label>';
+          }
+      } else {
+          echo "<p>No skills available for this type.</p>";
+      }
+      ?>
+    </div>
     <br>
-    <button type="submit" value="submit" id="submit" name="submit">Save Skills</button>
+    <button type="submit" name="submit">Save Skills</button>
   </form>
 </div>
 
-<script>
-  const skillData = {
-    Home: ["Plumbing", "Electrical", "Carpentry", "Painting", "Cleaning"],
-    Vehicle: ["Car Repair", "Bike Repair", "Truck Repair", "Oil Change", "Tire Replacement", "Battery Service"],
-    Tech: ["Computer Repair", "Mobile Repair", "TV Repair", "AC Repair", "Refrigerator Repair", "Washing Machine Repair", "Networking"]
-  };
-
-  const params = new URLSearchParams(window.location.search);
-  const type = params.get("type");
-  const id = params.get("id");
-  
-  const container = document.getElementById("skillsContainer");
-  if (type && skillData[type]) {
-    document.getElementById("title").innerText = "Select " + type + " Skills:";
-    document.getElementById("mecid").innerText = "Your Mechanic ID: " + id;
-    skillData[type].forEach(skill => {
-      const checkbox = `<label><input type="checkbox" name="skills[]" value="${skill}"> ${skill}</label>`;
-      container.innerHTML += checkbox;
-    });
-  } else {
-    container.innerHTML = "<p>No skills available.</p>";
-  }
-
-
-</script>
-
 </body>
 </html>
-
-<?php
-include('connection.php');
-session_start();
-
-$id = isset($_SESSION['id']) ? $_SESSION['id'] : '';
-$type = isset($_SESSION['type']) ? $_SESSION['type'] : '';
-
-if (!$id || !$type) {
-    echo "Mechanic ID or type not found!";
-    exit();
-}
-
-if (isset($_POST['submit'])) {
-
-    $skills = isset($_POST['skills']) ? $_POST['skills'] : [];
-
-    if (empty($skills)) {
-        echo "<script>alert('Please select at least one skill');</script>";
-        exit();
-    }
-
-   
-    $skills_str = implode(',', $skills);
-
-  
-    $id_valid = "SELECT * FROM mechanic WHERE mechanic_id ='$id'";
-    $result = mysqli_query($con, $id_valid);
-
-    if (mysqli_num_rows($result) > 0) {
-        // Insert skills
-        $sql = "INSERT INTO mechanic_skills (mechanic_id, mechanic_type, skill_name) VALUES ('$id','$type','$skills_str')";
-        $done = mysqli_query($con, $sql);
-        if ($done) {
-            header("Location: mechanic_login.php");
-            exit();
-        } else {
-            echo "Error inserting skills: " . mysqli_error($con);
-        }
-    } else {
-        echo "Mechanic ID not found!";
-    }
-}
-?>
-

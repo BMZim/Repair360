@@ -277,12 +277,12 @@
   cursor: pointer;
 }
 
-.item3 .service-manage-content .edit-btn {
+.item3 .service-manage-content .edit-btn-ser {
   background-color: #f0ad4e;
   color: white;
 }
 
-.item3 .service-manage-content .delete-btn {
+.item3 .service-manage-content .delete-btn-ser {
   background-color: #e74c3c;
   color: white;
 }

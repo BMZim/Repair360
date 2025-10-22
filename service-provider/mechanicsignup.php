@@ -33,7 +33,7 @@ if(isset($_POST)){
     }else if($rows = mysqli_num_rows($result1)>0){
         echo "2";
     }else{
-        $sql = "insert into mechanic values('$smecid','$sname','$snid','$hashedPass','$sdob','$sgender','$sdivision','$saddress','$sphone','$scity','$semail', '0', '$stype', '$sexperience','')";
+        $sql = "insert into mechanic values('$smecid','$sname','$snid','$hashedPass','$sdob','$sgender','$sdivision','$saddress','$sphone','$scity','$semail', 'New User', '$stype', '$sexperience','')";
         $done=mysqli_query($con, $sql);
         echo "0";
         $_SESSION['type'] = $stype;

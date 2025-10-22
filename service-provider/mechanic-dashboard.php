@@ -30,8 +30,90 @@ if($valid == true){
         
       </div>
       <div class="head-right">
-        <a href="#"><img src="img/bell.png" alt=""></a>
-        <a href="#"><img src="img/ChatGPT Image May 1, 2025, 11_29_51 AM.png" alt=""></a>
+        <!-- Notification Button -->
+<div class="notification-wrapper" style="position:relative; display:inline-block;">
+  <button id="notif-btn" >
+    <img src="img/bell.png" alt="Notifications">
+    <span id="notif-count" 
+          style="position:absolute; top:-5px; right:-5px; background:#e02424; color:#fff; border-radius:50%; font-size:11px; padding:2px 5px; display:none;">
+      0
+    </span>
+  </button>
+
+  <!-- Popup Notification Box -->
+  <div id="notif-popup" style="
+      position:absolute;
+      top:40px;
+      right:0;
+      width:300px;
+      background:#fff;
+      border:1px solid #ddd;
+      border-radius:10px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.1);
+      display:none;
+      z-index:999;
+      overflow:hidden;">
+    <div style="background:#f8f9fa; padding:10px; font-weight:bold; border-bottom:1px solid #eee;">
+      Notifications
+    </div>
+    <div id="notif-list" style="max-height:300px; overflow-y:auto; padding:10px;">
+      <p style="color:#888; text-align:center;">Loading...</p>
+    </div>
+  </div>
+</div>
+<script>
+$(document).ready(function(){
+  const popup = $("#notif-popup");
+  const count = $("#notif-count");
+
+  $("#notif-btn").on("click", function(e){
+  e.stopPropagation();
+  popup.toggle();
+
+  if(popup.is(":visible")) {
+    loadNotifications();
+    markAsRead(); // ✅ mark them read when opened
+  }
+});
+function markAsRead(){
+  $.post("notification/notifications_mark_read.php", function(){
+    count.hide(); // ✅ remove the red badge
+  });
+}
+
+  // Hide popup on outside click
+  $(document).on("click", function(e){
+    if(!$(e.target).closest(".notification-wrapper").length){
+      popup.hide();
+    }
+  });
+
+  // Load notifications from PHP
+  function loadNotifications(){
+    $("#notif-list").html("<p style='text-align:center; color:#888;'>Loading...</p>");
+    $.get("notification/notifications_fetch.php", function(data){
+      $("#notif-list").html(data);
+    });
+  }
+
+  // Optional: refresh unread count periodically
+  function updateCount(){
+    $.get("notification/notifications_count.php", function(num){
+      if(num > 0){
+        count.text(num).show();
+      } else {
+        count.hide();
+      }
+    });
+  }
+
+  updateCount();
+  setInterval(updateCount, 15000); // every 15s
+});
+</script>
+
+
+        <button><img src="img/ChatGPT Image May 1, 2025, 11_29_51 AM.png" alt=""></button>
       </div>
       
 

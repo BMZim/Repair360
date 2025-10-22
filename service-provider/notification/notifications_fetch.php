@@ -1,14 +1,13 @@
 <?php
-include("../db.php");
+include("../connection.php");
 session_start();
 
-$customer_id = $_SESSION['customer_id'] ?? 0;
+$mechanic_id = $_SESSION['id'] ?? 0;
 
-// Example table: notifications (id, customer_id, message, created_at, status)
-$sql = "SELECT message, created_at FROM customer_notifications 
-        WHERE customer_id = ? ORDER BY id DESC LIMIT 10";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $customer_id);
+$sql = "SELECT message, created_at FROM mechanic_notifications 
+        WHERE mechanic_id = ? ORDER BY id DESC LIMIT 10";
+$stmt = $con->prepare($sql);
+$stmt->bind_param("i", $mechanic_id);
 $stmt->execute();
 $result = $stmt->get_result();
 

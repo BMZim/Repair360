@@ -45,6 +45,11 @@
         padding-right: 20px;
         padding-top: 15px;
       }
+      .item1 .head-right button{
+        background: none;
+        border: none;
+        cursor: pointer;
+      }
       .item1 .head-right img{
         height: 40px;
         border-radius: 50px;
