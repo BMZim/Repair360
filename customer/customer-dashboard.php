@@ -331,7 +331,7 @@ function showLocation(lat, lng) {
 
             $customer_id = $_SESSION['customer_id']; // Logged-in customer
 
-            // ✅ Exclude completed appointments
+            
             $sql = "SELECT a.appointment_id, s.skills AS service_name, 
                            a.appointment_date, a.appointment_time, a.status,
                            ts.status AS track_status
@@ -349,7 +349,7 @@ function showLocation(lat, lng) {
 
             if ($result->num_rows > 0) {
                 while ($row = $result->fetch_assoc()) {
-                    $statusClass = strtolower($row['status']); // e.g. confirmed, pending
+                    $statusClass = strtolower($row['status']); //confirmed, pending
                     echo "<tr>
                             <td>" . htmlspecialchars($row['service_name']) . "</td>
                             <td>" . htmlspecialchars($row['appointment_date']) . "</td>
@@ -377,8 +377,6 @@ function showLocation(lat, lng) {
 include("db.php");
 
 $customer_id = $_SESSION['customer_id'];
-
-// ✅ Get only active (Pending/Confirmed) appointments and exclude Completed ones
 $sql1 = "SELECT a.appointment_id, a.status, ts.status AS track_status
          FROM appointments a
          LEFT JOIN track_status ts ON a.appointment_id = ts.appointment_id
@@ -394,8 +392,6 @@ if ($res1->num_rows > 0) {
     while($row1 = $res1->fetch_assoc()) {
         $appointment_id = $row1['appointment_id'];
         $appt_status    = $row1['status'];
-
-        // ✅ Get appointment + mechanic + tracking details
         $sql = "SELECT 
                     s.skills AS service_name,
                     m.full_name AS mechanic_name,
@@ -651,7 +647,7 @@ function loadMessages(){
 
 // Send message
 $("#chat-send").on("click", function(){
-    let msg = $("#chat-input").val().trim();  // ✅ fixed: was #chat-message
+    let msg = $("#chat-input").val().trim();  
     if(msg === "" || !activeAppointment) return;
 
     $.post("chat/send_chat.php", {
@@ -660,7 +656,7 @@ $("#chat-send").on("click", function(){
         sender_id: <?= $customer_id ?>,
         message: msg
     }, function(res){
-        $("#chat-input").val("");  // ✅ clear input correctly
+        $("#chat-input").val(""); 
         loadMessages();
     });
 });
@@ -735,44 +731,53 @@ $('#chat-input').on('keypress', function(e){
         </div>
         <div class="paybill-content">
   <?php
-  include("db.php");
-  $customer_id = $_SESSION['customer_id'];
+include("db.php");
+if (!isset($_SESSION['customer_id'])) {
+  echo "<p>Please login first.</p>";
+  exit;
+}
 
-  // Fetch all services whose status = 'Completed' in track_status
-  $sql = "SELECT a.appointment_id, s.skills AS service_name, ts.status AS track_status, 
-                 -- you may have price stored in appointments or a service_fees table
-                 a.fee, m.full_name AS mechanic_name
-          FROM appointments a
-          JOIN track_status ts ON a.appointment_id = ts.appointment_id
-          JOIN service s ON a.service_id = s.service_id
-          JOIN mechanic m ON a.mechanic_id = m.mechanic_id
-          WHERE a.customer_id = ? AND ts.status = 'Completed'";
-  $stmt = $conn->prepare($sql);
-  $stmt->bind_param("i", $customer_id);
-  $stmt->execute();
-  $res = $stmt->get_result();
+$customer_id = $_SESSION['customer_id'];
 
-  if ($res && $res->num_rows > 0) {
-    while ($row = $res->fetch_assoc()) {
-      ?>
-      <div class="payable-card" data-appointment="<?= $row['appointment_id']; ?>"
-           data-service="<?= htmlspecialchars($row['service_name']); ?>"
-           data-fee="<?= $row['fee']; ?>"
-           data-mechanic="<?= htmlspecialchars($row['mechanic_name']); ?>">
-        <p><strong>Service:</strong> <?= htmlspecialchars($row['service_name']); ?></p>
-        <p><strong>Mechanic:</strong> <?= htmlspecialchars($row['mechanic_name']); ?></p>
-        <p><strong>Fee:</strong> BDT <?= number_format($row['fee'],2); ?></p>
-        <button class="btn-pay">Pay Now</button>
-      </div>
-      <?php
-    }
-  } else {
-    echo "<p>No services pending payment.</p>";
+$sql = "SELECT a.appointment_id, s.skills AS service_name, ts.status AS track_status,
+               a.fee, m.full_name AS mechanic_name, m.mechanic_id, 
+               COALESCE(p.status, 'Unpaid') AS payment_status
+        FROM appointments a
+        JOIN track_status ts ON a.appointment_id = ts.appointment_id
+        JOIN service s ON a.service_id = s.service_id
+        JOIN mechanic m ON a.mechanic_id = m.mechanic_id
+        LEFT JOIN payments p ON a.appointment_id = p.appointment_id
+        WHERE a.customer_id = ? 
+          AND ts.status = 'Completed'
+          AND (p.status = 'Unpaid' OR p.status IS NULL)";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $customer_id);
+$stmt->execute();
+$res = $stmt->get_result();
+
+if ($res && $res->num_rows > 0) {
+  while ($row = $res->fetch_assoc()) {
+    ?>
+    <div class="payable-card"
+         data-appointment="<?= $row['appointment_id']; ?>"
+         data-service="<?= htmlspecialchars($row['service_name']); ?>"
+         data-fee="<?= $row['fee']; ?>"
+         data-mechanic="<?= htmlspecialchars($row['mechanic_name']); ?>"
+         data-mechanicid="<?= $row['mechanic_id']; ?>">
+      <p><strong>Service:</strong> <?= htmlspecialchars($row['service_name']); ?></p>
+      <p><strong>Mechanic:</strong> <?= htmlspecialchars($row['mechanic_name']); ?></p>
+      <p><strong>Fee:</strong> BDT <?= number_format($row['fee'],2); ?></p>
+      <button class="btn-pay">Pay Now</button>
+    </div>
+    <?php
   }
-  ?>
+} else {
+  echo "<p>No services pending payment.</p>";
+}
+?>
 </div>
 
-<!-- Popup modal (hidden by default) -->
+<!-- Popup modal -->
 <div id="paymentModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
      background: rgba(0,0,0,0.5); justify-content:center; align-items:center;">
   <div style="background:#fff; padding:20px; border-radius:8px; max-width:400px; width:90%;">
@@ -784,10 +789,8 @@ $('#chat-input').on('keypress', function(e){
     <button id="btnCancelPay">Cancel</button>
   </div>
 </div>
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-$(document).ready(function(){
+$(function(){
   let selected = {};
 
   $(".btn-pay").on("click", function(){
@@ -796,6 +799,7 @@ $(document).ready(function(){
     selected.service = card.data("service");
     selected.fee = card.data("fee");
     selected.mechanic = card.data("mechanic");
+    selected.mechanicid = card.data("mechanicid");
 
     $("#modalService").text("Service: " + selected.service);
     $("#modalMechanic").text("Mechanic: " + selected.mechanic);
@@ -809,56 +813,173 @@ $(document).ready(function(){
   });
 
   $("#btnProceedPay").on("click", function(){
-    // open payment page in new tab
-    let url = "pay_gateway.php?appointment=" + selected.appointment
-            + "&fee=" + selected.fee;
+    const customer_id = <?= json_encode($customer_id) ?>;
+    const url = `pay_gateway.php?appointment_id=${selected.appointment}`
+              + `&customer_id=${customer_id}`
+              + `&mechanic_id=${selected.mechanicid}`
+              + `&amount=${selected.fee}`;
     window.open(url, "_blank");
     $("#paymentModal").hide();
   });
 });
 </script>
 
+
       </div>
       <div class="tabPanel">
         <div class="reviews-head">
           <h2>My Reviews</h2>
         </div>
-        <div class="review-content">
-            <div class="reviews-container">
-          <h2>Leave a Review</h2>
+        <?php
 
-    <!-- Existing reviews list -->
-    <div id="reviewList" class="review-list">
-      <!-- Reviews will be added here by JavaScript -->
+        include("db.php");
+
+          
+
+        $customer_id = $_SESSION['customer_id'];
+        ?>
+
+<div class="review-content" style="display:flex; gap:40px; padding:40px; background:#f9fafb; border-radius:10px;">
+  
+  <!-- Review Form (Left Side) -->
+  <div class="review-form" style="flex:1; background:white; padding:30px; border-radius:12px; box-shadow:0 5px 20px rgba(0,0,0,0.1);">
+    <h2 style="margin-bottom:20px;">Leave a Review</h2>
+
+    <label for="service">Select Service:</label>
+    <select id="service" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
+      <option value="">-- Choose Service --</option>
+      <?php
+      $sql = "SELECT DISTINCT s.service_id, s.skills, m.mechanic_id, m.full_name
+              FROM appointments a
+              JOIN service s ON a.service_id = s.service_id
+              JOIN mechanic m ON a.mechanic_id = m.mechanic_id
+              JOIN track_status ts ON a.appointment_id = ts.appointment_id
+              JOIN payments p ON a.appointment_id = p.appointment_id
+              WHERE a.customer_id = ?
+                AND ts.status = 'Completed'
+                AND p.status = 'Paid'
+                AND s.service_id NOT IN (
+                    SELECT service_id FROM mechanic_rating WHERE customer_id = ?
+                )";
+      $stmt = $conn->prepare($sql);
+      $stmt->bind_param("ii", $customer_id, $customer_id);
+      $stmt->execute();
+      $result = $stmt->get_result();
+
+      if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+          echo "<option value='{$row['service_id']}' data-mechanic='{$row['mechanic_id']}'>{$row['skills']} - {$row['full_name']}</option>";
+        }
+      } else {
+        echo "<option value=''>No services available for review</option>";
+      }
+      ?>
+    </select>
+
+    <label>Rate this service:</label>
+    <div class="rating" style="margin:10px 0;">
+      <span class="star" data-value="1">&#9734;</span>
+      <span class="star" data-value="2">&#9734;</span>
+      <span class="star" data-value="3">&#9734;</span>
+      <span class="star" data-value="4">&#9734;</span>
+      <span class="star" data-value="5">&#9734;</span>
     </div>
 
-    <!-- Add new review -->
-    <div class="review-form">
-
-      <label for="service">Select Service:</label>
-      <select id="service">
-        <option value="">-- Choose Service --</option>
-        <option value="Refrigerator Repair">Refrigerator Repair</option>
-        <option value="AC Maintenance">AC Maintenance</option>
-        <option value="TV Setup">TV Setup</option>
-      </select>
-
-      <div class="rating">
-        <span class="star" data-value="1">&#9734;</span>
-        <span class="star" data-value="2">&#9734;</span>
-        <span class="star" data-value="3">&#9734;</span>
-        <span class="star" data-value="4">&#9734;</span>
-        <span class="star" data-value="5">&#9734;</span>
-      </div>
-
-      <textarea id="reviewText" rows="4" placeholder="Write your feedback..."></textarea>
-      <button onclick="submitReview()">Submit Review</button>
-    </div>
+    <textarea id="reviewText" rows="4" placeholder="Write your feedback..." style="width:100%; border-radius:6px; padding:10px; border:1px solid #ccc;"></textarea>
+    <button id="submitReview" style="margin-top:15px; background:#10b981; color:white; border:none; padding:10px 18px; border-radius:8px; font-weight:600; cursor:pointer;">Submit Review</button>
   </div>
 
-  <script src="review.js"></script>
+  <!-- Review List (Right Side) -->
+  <div class="review-list" style="flex:1; background:white; padding:30px; border-radius:12px; box-shadow:0 5px 20px rgba(0,0,0,0.1);">
+    <h2>Your Reviews</h2>
+    <div id="reviewList">
+      <?php
+      
+      $review_sql = "SELECT r.rating_id, r.rating, r.review, s.skills AS service_name, m.full_name AS mechanic_name
+                     FROM mechanic_rating r
+                     JOIN service s ON r.service_id = s.service_id
+                     JOIN mechanic m ON r.mechanic_id = m.mechanic_id
+                     WHERE r.customer_id = ?
+                     ORDER BY r.rating_id DESC";
+      $review_stmt = $conn->prepare($review_sql);
+      $review_stmt->bind_param("i", $customer_id);
+      $review_stmt->execute();
+      $reviews = $review_stmt->get_result();
 
-        </div>
+      if ($reviews->num_rows > 0) {
+        while ($r = $reviews->fetch_assoc()) {
+          $stars = str_repeat("&#9733;", $r['rating']) . str_repeat("&#9734;", 5 - $r['rating']);
+          echo "<div class='review-item' data-id='{$r['rating_id']}' style='margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:10px;'>
+                  <p><strong>Service:</strong> {$r['service_name']}</p>
+                  <p><strong>Mechanic:</strong> {$r['mechanic_name']}</p>
+                  <p><span style='color:#facc15; font-size:18px;'>$stars</span></p>
+                  <p>{$r['review']}</p>
+                  <button class='editReview' style='background:#3b82f6; color:white; border:none; border-radius:6px; padding:5px 10px;'>Edit</button>
+                  <button class='deleteReview' style='background:#ef4444; color:white; border:none; border-radius:6px; padding:5px 10px;'>Delete</button>
+                </div>";
+        }
+      } else {
+        echo "<p>No reviews yet.</p>";
+      }
+      ?>
+    </div>
+  </div>
+</div>
+<script>
+let selectedRating = 0;
+
+$(".star").on("click", function(){
+  selectedRating = $(this).data("value");
+  $(".star").html("&#9734;");
+  $(this).prevAll().addBack().html("&#9733;");
+});
+
+$("#submitReview").on("click", function(){
+  const service_id = $("#service").val();
+  const mechanic_id = $("#service option:selected").data("mechanic");
+  const review = $("#reviewText").val().trim();
+
+  if(!service_id || selectedRating === 0 || review === ""){
+    alert("Please select a service, give a rating, and write a review!");
+    return;
+  }
+
+  $.post("review/submit_review.php", {
+    service_id: service_id,
+    mechanic_id: mechanic_id,
+    rating: selectedRating,
+    review: review
+  }, function(res){
+    alert(res);
+    location.reload();
+  });
+});
+
+
+$(document).on("click", ".editReview", function(){
+  const id = $(this).closest(".review-item").data("id");
+  const currentText = $(this).siblings("p:last").text();
+  const newText = prompt("Edit your review:", currentText);
+  if(newText !== null && newText.trim() !== ""){
+    $.post("review/edit_review.php", {rating_id: id, review: newText}, function(res){
+      alert(res);
+      location.reload();
+    });
+  }
+});
+
+
+$(document).on("click", ".deleteReview", function(){
+  const id = $(this).closest(".review-item").data("id");
+  if(confirm("Are you sure you want to delete this review?")){
+    $.post("review/delete_review.php", {rating_id: id}, function(res){
+      alert(res);
+      location.reload();
+    });
+  }
+});
+</script>
+
       </div>
       
       <div class="tabPanel">
@@ -1063,7 +1184,7 @@ $(document).ready(function(){
       },
       error: function(){
         Swal.fire({
-          title: "⚠️ Error!",
+          title: "Error!",
           text: "Could not connect to server.",
           icon: "error"
         });

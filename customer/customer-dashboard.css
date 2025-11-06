@@ -523,7 +523,148 @@ font-weight: bold;
 .item3 .unpaid {
 color: #856404;
 font-weight: bold;
-}      
+}
+.paybill-content {
+  display: flex;
+  gap: 20px;
+  padding: 40px;
+  background: linear-gradient(135deg, #f8faff, #eef2ff);
+  font-family: "Poppins", Arial, sans-serif;
+}
+.payable-card {
+  
+  background: #fff;
+  border-radius: 14px;
+  padding: 25px 30px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  border: 1px solid #e5e9f2;
+  position: relative;
+}
+
+.payable-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+}
+
+.payable-card p {
+  margin: 8px 0;
+  color: #333;
+  font-size: 15px;
+}
+
+.payable-card strong {
+  color: #0a1a47;
+}
+
+.btn-pay {
+  margin-top: 14px;
+  background: linear-gradient(135deg, #28c76f, #81fbb8);
+  color: #e64855;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 10px rgba(40, 199, 111, 0.3);
+}
+
+.btn-pay:hover {
+  background: linear-gradient(135deg, #20b262, #5fffa0);
+  box-shadow: 0 6px 15px rgba(40, 199, 111, 0.4);
+  transform: translateY(-2px);
+}
+
+.paybill-content p {
+  font-size: 16px;
+  color: #555;
+}
+
+#paymentModal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(9, 20, 40, 0.5);
+  backdrop-filter: blur(4px);
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+#paymentModal > div {
+  background: #fff;
+  border-radius: 12px;
+  padding: 30px;
+  width: 90%;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.4s ease;
+}
+#paymentModal h3 {
+  margin-bottom: 20px;
+  color: #1a202c;
+  font-size: 22px;
+  font-weight: 700;
+  border-bottom: 2px solid #e8ecf5;
+  padding-bottom: 10px;
+}
+#paymentModal p {
+  margin: 10px 0;
+  color: #333;
+  font-size: 15px;
+}
+#btnProceedPay, #btnCancelPay {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  margin: 10px 5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#btnProceedPay {
+  background: linear-gradient(135deg, #00c6ff, #0072ff);
+  color: white;
+  box-shadow: 0 3px 12px rgba(0, 114, 255, 0.3);
+}
+
+#btnProceedPay:hover {
+  background: linear-gradient(135deg, #0072ff, #00c6ff);
+  transform: translateY(-2px);
+}
+
+#btnCancelPay {
+  background: #f4f4f4;
+  color: #555;
+}
+
+#btnCancelPay:hover {
+  background: #e2e8f0;
+  transform: translateY(-2px);
+}
+
+/* ✨ Fade-in Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ✅ Responsive */
+@media (max-width: 480px) {
+  .payable-card {
+    padding: 20px;
+  }
+  .paybill-content {
+    padding: 20px;
+  }
+}
+
 .item3 .review-content {
   max-width: 800px;
   margin: 40px auto;

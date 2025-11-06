@@ -18,6 +18,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $sql = "UPDATE track_status SET status = ? WHERE appointment_id = ?";
         $stmt = $con->prepare($sql);
         $stmt->bind_param("si",  $status, $appointment_id);
+
+        if($status === 'Completed'){
+             // ➕ Insert new record if not exists
+            $insert = "INSERT INTO payments VALUES ('', '$appointment_id', '', '$mechanic_id', '', '', 'Unpaid', '', '', '')";
+            mysqli_query($con, $insert);
+        }else{
+            
+        }
+
     } else {
         
         $sql = "INSERT INTO track_status (appointment_id, mechanic_id, estimated_arrival, current_status, status) 

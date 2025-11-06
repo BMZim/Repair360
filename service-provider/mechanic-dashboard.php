@@ -14,7 +14,6 @@ if($valid == true){
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
-    <script src="map.js" defer></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
   
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -72,12 +71,12 @@ $(document).ready(function(){
 
   if(popup.is(":visible")) {
     loadNotifications();
-    markAsRead(); // ✅ mark them read when opened
+    markAsRead(); // mark them read when opened
   }
 });
 function markAsRead(){
   $.post("notification/notifications_mark_read.php", function(){
-    count.hide(); // ✅ remove the red badge
+    count.hide(); //remove the red badge
   });
 }
 
@@ -187,6 +186,26 @@ if ($result->num_rows > 0) {
             <p><strong>Address:</strong> <?= htmlspecialchars($row['customer_address']); ?></p>
             <p><strong>Date & Time:</strong> <?= $dateTime; ?></p>
             <p><strong>Description:</strong> <?= htmlspecialchars($row['description']); ?></p>
+            <?php 
+
+              $rat = "select * from customer_rating where customer_id = '$customer_id'";
+              $res = mysqli_query($con, $rat);
+
+              $row1 = $res->fetch_assoc();
+
+              $rating = (int)$row1['rating']; 
+              if ($rating > 0) {
+                  echo "<p><strong>Rating:</strong> ";
+                  for ($i=1; $i<=5; $i++) {
+                      echo $i <= $rating ? "<span style='color:#facc15;font-size:18px;'>★</span>" 
+                                        : "<span style='color:#ccc;font-size:18px;'>☆</span>";
+                  }
+                  echo "</p>";
+              } else {
+                  echo "<p><strong>Rating:</strong> Not rated yet</p>";
+              }
+            ?>
+
             <div class="action-buttons">
                 <form method="post" action="update_appointments.php" style="display:inline;">
                     <input type="hidden" name="appointment_id" value="<?= $appointment_id; ?>">
@@ -267,7 +286,7 @@ if ($result->num_rows > 0) {
       include("connection.php");
       $mechanic_id = $_SESSION['id']; // logged in mechanic id
 
-      // ✅ Exclude appointments where track_status = 'Completed'
+     
       $sql = "SELECT 
                   s.skills AS service_name,
                   a.appointment_date,
@@ -365,7 +384,6 @@ include("connection.php");
 
 $mechanic_id = $_SESSION['id'];
 
-// ✅ Select only jobs that are NOT completed
 $sql = "SELECT 
             a.appointment_id,
             a.appointment_date,
@@ -399,7 +417,7 @@ if ($result->num_rows > 0) {
             <p><strong>Date & Time:</strong> <?= date("d M Y, h:i A", strtotime($row['appointment_date']." ".$row['appointment_time'])); ?></p>
             <p><strong>Description:</strong> <?= htmlspecialchars($row['description']); ?></p>
 
-            <!-- 🧭 Tracking Form -->
+            <!--  Tracking Form -->
             <form method="post" class="track-form" 
                 style="border:1px solid #ccc; padding:15px; border-radius:8px; background:#f9f9f9; margin-top:15px; width:100%; max-width:420px; font-family:Arial, sans-serif;">
                 
@@ -847,42 +865,135 @@ $('#mchat-input').on('keypress', function (e) {
         <div class="review-head">
           <h2>My Reviews</h2>
         </div>
-        <div class="review-content">
-        
-          <div class="review-list" id="reviewList">
-      <div class="review-item">
-        <div class="stars">★★★★★</div>
-        <p><strong>Arif Rahman:</strong> Very punctual and professional. Highly recommended!</p>
-      </div>
-      <div class="review-item">
-        <div class="stars">★★★★☆</div>
-        <p><strong>Nusrat Jahan:</strong> Good service, but arrived 15 minutes late.</p>
-      </div>
+        <?php
+
+include("connection.php");
+
+if (!isset($_SESSION['id'])) {
+  echo "<p>Please login first.</p>";
+  exit;
+}
+
+$mechanic_id = $_SESSION['id'];
+?>
+
+<div class="review-content" style="display:flex; gap:40px; padding:40px; background:#f9fafb; border-radius:10px;">
+  
+  <!-- LEFT SIDE: Reviews FROM Customers -->
+  <div class="review-list" style="flex:1; background:white; padding:30px; border-radius:12px; box-shadow:0 5px 20px rgba(0,0,0,0.1);">
+    <h2>Customer Reviews for You</h2>
+    <div id="reviewList">
+      <?php
+      $sql = "SELECT r.rating_id, r.rating, r.review, c.full_name AS customer_name, s.skills AS service_name, c.customer_id
+              FROM mechanic_rating r
+              JOIN customer c ON r.customer_id = c.customer_id
+              JOIN service s ON r.service_id = s.service_id
+              WHERE r.mechanic_id = ?
+              ORDER BY r.rating_id DESC";
+      $stmt = $con->prepare($sql);
+      $stmt->bind_param("i", $mechanic_id);
+      $stmt->execute();
+      $result = $stmt->get_result();
+
+      if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+          $stars = str_repeat("&#9733;", $row['rating']) . str_repeat("&#9734;", 5 - $row['rating']);
+          echo "
+          <div class='review-item' style='margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:10px;'>
+            <p><strong>{$row['customer_name']}</strong> (Service: {$row['service_name']})</p>
+            <p><span style='color:#facc15; font-size:18px;'>$stars</span></p>
+            <p>{$row['review']}</p>
+          </div>";
+        }
+      } else {
+        echo "<p>No customer reviews yet.</p>";
+      }
+      ?>
+    </div>
+  </div>
+
+  <!-- RIGHT SIDE: Give Review TO Customers -->
+  <div class="review-form" style="flex:1; background:white; padding:30px; border-radius:12px; box-shadow:0 5px 20px rgba(0,0,0,0.1);">
+    <h2>Leave Review for Customer</h2>
+
+    <label for="customerSelect">Select Customer:</label>
+    <select id="customerSelect" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:15px;">
+      <option value="">-- Choose Customer --</option>
+      <?php
+      // Only customers who reviewed mechanic AND whose appointment is completed & paid, and not yet reviewed by mechanic
+      $customer_sql = "SELECT DISTINCT c.customer_id, c.full_name, s.service_id, s.skills
+                       FROM appointments a
+                       JOIN customer c ON a.customer_id = c.customer_id
+                       JOIN service s ON a.service_id = s.service_id
+                       JOIN track_status ts ON a.appointment_id = ts.appointment_id
+                       JOIN payments p ON a.appointment_id = p.appointment_id
+                       WHERE a.mechanic_id = ?
+                         AND ts.status = 'Completed'
+                         AND p.status = 'Paid'
+                         AND c.customer_id NOT IN (
+                             SELECT customer_id FROM customer_rating WHERE mechanic_id = ?
+                         )";
+      $stmt2 = $con->prepare($customer_sql);
+      $stmt2->bind_param("ii", $mechanic_id, $mechanic_id);
+      $stmt2->execute();
+      $customers = $stmt2->get_result();
+
+      if ($customers->num_rows > 0) {
+        while ($r = $customers->fetch_assoc()) {
+          echo "<option value='{$r['customer_id']}' data-service='{$r['service_id']}'>{$r['full_name']} - {$r['skills']}</option>";
+        }
+      } else {
+        echo "<option value=''>No eligible customers yet</option>";
+      }
+      ?>
+    </select>
+
+    <label>Rating:</label>
+    <div class="rating" style="margin:10px 0;">
+      <span class="star" data-value="1">&#9734;</span>
+      <span class="star" data-value="2">&#9734;</span>
+      <span class="star" data-value="3">&#9734;</span>
+      <span class="star" data-value="4">&#9734;</span>
+      <span class="star" data-value="5">&#9734;</span>
     </div>
 
-    <!-- Submit Review -->
-    <div class="review-form">
-      <h3>Leave a Review</h3>
-      <label for="reviewer">Your Name:</label>
-      <input type="text" id="reviewer" placeholder="e.g. Hasan Karim" required />
+    <textarea id="reviewText" rows="4" placeholder="Write your feedback..." style="width:100%; border-radius:6px; padding:10px; border:1px solid #ccc;"></textarea>
+    <button id="submitReview" style="margin-top:15px; background:#10b981; color:white; border:none; padding:10px 18px; border-radius:8px; font-weight:600; cursor:pointer;">Submit Review</button>
+  </div>
+</div>
+<script>
+let selectedRating = 0;
 
-      <label for="rating">Rating:</label>
-      <select id="rating">
-        <option value="5">★★★★★ (5)</option>
-        <option value="4">★★★★☆ (4)</option>
-        <option value="3">★★★☆☆ (3)</option>
-        <option value="2">★★☆☆☆ (2)</option>
-        <option value="1">★☆☆☆☆ (1)</option>
-      </select>
+//Star rating click
+$(".star").on("click", function(){
+  selectedRating = $(this).data("value");
+  $(".star").html("&#9734;");
+  $(this).prevAll().addBack().html("&#9733;");
+});
 
-      <label for="comment">Review:</label>
-      <textarea id="comment" rows="4" placeholder="Write your feedback..." required></textarea>
+//Submit review
+$("#submitReview").on("click", function(){
+  const customer_id = $("#customerSelect").val();
+  const service_id = $("#customerSelect option:selected").data("service");
+  const review = $("#reviewText").val().trim();
 
-      <button onclick="submitReview()">Submit Review</button>
-       <script src="rating.js"></script>
-    </div>
+  if(!customer_id || selectedRating === 0 || review === ""){
+    alert("Please choose a customer, select rating, and write a review!");
+    return;
+  }
 
-            </div>
+  $.post("review/submit_review.php", {
+    customer_id: customer_id,
+    service_id: service_id,
+    rating: selectedRating,
+    review: review
+  }, function(res){
+    alert(res);
+    location.reload();
+  });
+});
+</script>
+
         </div>
 
 
