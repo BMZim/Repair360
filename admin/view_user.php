@@ -28,9 +28,9 @@ $stmt->close();
 $conn->close();
 
 // Profile image setup
-$avatar = (!empty($user['avatar']) && file_exists("uploads/".$user['avatar'])) 
-    ? "uploads/".$user['avatar'] 
-    : "uploads/default-avatar.png";
+$avatar = (!empty($user['avatar']) && file_exists("../uploads/".$user['avatar'])) 
+    ? "../uploads/".$user['avatar'] 
+    : "../uploads/default.png";
 ?>
 <!DOCTYPE html>
 <html lang="en">

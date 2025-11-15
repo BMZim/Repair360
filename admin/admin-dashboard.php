@@ -404,10 +404,6 @@ $(document).on('click', '.cancel-btn', function(){
         <p id="totalBookings">0</p>
       </div>
       <div class="card">
-        <h3>Total Revenue</h3>
-        <p id="totalRevenue">৳ 0</p>
-      </div>
-      <div class="card">
         <h3>Total Users</h3>
         <p id="totalUsers">0</p>
       </div>

@@ -112,7 +112,24 @@ function markAsRead(){
 </script>
 
 
-        <button><img src="img/ChatGPT Image May 1, 2025, 11_29_51 AM.png" alt=""></button>
+        <button id="prof-btn">
+        <?php 
+            include("connection.php");
+            $mechanic_id = $_SESSION['id'];
+
+            $sql = "SELECT avatar FROM mechanic WHERE mechanic_id = '$mechanic_id'";
+            $result = mysqli_query($con, $sql);
+
+            if ($result && mysqli_num_rows($result) > 0) {
+                $row = mysqli_fetch_assoc($result);
+                $photo = $row['avatar'] ? $row['avatar'] : 'default.png';
+            } else {
+                $photo = "default.png";
+            }
+            ?>
+
+            <img src="../uploads/<?php echo $photo; ?>" alt="Profile Photo">
+        </button>
       </div>
       
 
@@ -188,34 +205,42 @@ if ($result->num_rows > 0) {
             <p><strong>Description:</strong> <?= htmlspecialchars($row['description']); ?></p>
             <?php 
 
-              $rat = "select * from customer_rating where customer_id = '$customer_id'";
-              $res = mysqli_query($con, $rat);
+            $rat = "SELECT * FROM customer_rating WHERE customer_id = '$customer_id'";
+            $res = mysqli_query($con, $rat);
 
-              $row1 = $res->fetch_assoc();
+            // fetch row safely
+            $row1 = $res ? $res->fetch_assoc() : null;
 
-              $rating = (int)$row1['rating']; 
-              if ($rating > 0) {
-                  echo "<p><strong>Rating:</strong> ";
-                  for ($i=1; $i<=5; $i++) {
-                      echo $i <= $rating ? "<span style='color:#facc15;font-size:18px;'>★</span>" 
-                                        : "<span style='color:#ccc;font-size:18px;'>☆</span>";
-                  }
-                  echo "</p>";
-              } else {
-                  echo "<p><strong>Rating:</strong> Not rated yet</p>";
-              }
+            // get rating safely (no warning even if null)
+            $rating = isset($row1['rating']) ? (int)$row1['rating'] : 0;
+
+            if ($rating > 0) {
+                echo "<p><strong>Rating:</strong> ";
+                for ($i = 1; $i <= 5; $i++) {
+                    echo $i <= $rating 
+                        ? "<span style='color:#facc15;font-size:18px;'>★</span>" 
+                        : "<span style='color:#ccc;font-size:18px;'>☆</span>";
+                }
+                echo "</p>";
+            } else {
+                echo "<p><strong>Rating:</strong> Not rated yet</p>";
+            }
+
             ?>
+
 
             <div class="action-buttons">
                 <form method="post" action="update_appointments.php" style="display:inline;">
                     <input type="hidden" name="appointment_id" value="<?= $appointment_id; ?>">
+                    <input type="hidden" name="customer_id" value="<?= $customer_id; ?>">
                     <input type="hidden" name="status" value="Confirmed">
-                    <button type="submit" class="accept-btn">Accept</button>
+                    <button type="submit" name="accept" class="accept-btn">Accept</button>
                 </form>
                 <form method="post" action="update_appointments.php" style="display:inline;">
                     <input type="hidden" name="appointment_id" value="<?= $appointment_id; ?>">
+                    <input type="hidden" name="customer_id" value="<?= $customer_id; ?>">
                     <input type="hidden" name="status" value="Cancelled">
-                    <button type="submit" class="decline-btn">Decline</button>
+                    <button type="submit" name="decline" class="decline-btn">Decline</button>
                 </form>
             </div>
           </div>
@@ -336,42 +361,102 @@ if ($result->num_rows > 0) {
         <div class="track-service-head">
           <h2>Service History</h2>
         </div>
-        <div class="track-service-content">
-            <table class="history-table">
-      <thead>
+       <div class="track-service-content">
+
+<?php
+include("connection.php");
+$mechanic_id = $_SESSION['id'];
+
+/*
+    RULES:
+    - Show only:
+      1. Completed services (track_status = Completed AND appointments.status = Confirmed)
+      2. Cancelled services (appointments.status = Cancelled)
+*/
+
+// Completed Services Query
+$sql_completed = "
+    SELECT 
+        a.appointment_id,
+        a.appointment_date,
+        c.full_name AS customer_name,
+        s.skills AS service_name,
+        'Completed' AS final_status,
+        mr.review AS feedback
+    FROM appointments a
+    JOIN customer c ON a.customer_id = c.customer_id
+    JOIN service s ON a.service_id = s.service_id
+    JOIN track_status ts ON ts.appointment_id = a.appointment_id
+    LEFT JOIN mechanic_rating mr 
+           ON mr.mechanic_id = a.mechanic_id 
+          AND mr.customer_id = a.customer_id 
+          AND mr.service_id = a.service_id
+    WHERE a.mechanic_id = ?
+      AND a.status = 'Confirmed'
+      AND ts.status = 'Completed'
+";
+
+// Cancelled Services Query
+$sql_cancelled = "
+    SELECT 
+        a.appointment_id,
+        a.appointment_date,
+        c.full_name AS customer_name,
+        s.skills AS service_name,
+        'Cancelled' AS final_status,
+        'Service canceled by You.' AS feedback
+    FROM appointments a
+    JOIN customer c ON a.customer_id = c.customer_id
+    JOIN service s ON a.service_id = s.service_id
+    WHERE a.mechanic_id = ?
+      AND a.status = 'Cancelled'
+";
+
+// Merge results
+$sql = "($sql_completed) UNION ALL ($sql_cancelled) ORDER BY appointment_date DESC";
+
+$stmt = $con->prepare($sql);
+$stmt->bind_param("ii", $mechanic_id, $mechanic_id);
+$stmt->execute();
+$result = $stmt->get_result();
+?>
+
+<table class="history-table">
+    <thead>
         <tr>
-          <th>Service</th>
-          <th>Date</th>
-          <th>Customer</th>
-          <th>Status</th>
-          <th>Feedback</th>
+            <th>Service</th>
+            <th>Date</th>
+            <th>Customer</th>
+            <th>Status</th>
+            <th>Feedback</th>
         </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>AC Servicing</td>
-          <td>2025-07-12</td>
-          <td>Nazmul Hasan</td>
-          <td><span class="badge completed">Completed</span></td>
-          <td>Quick service, very satisfied!</td>
-        </tr>
-        <tr>
-          <td>Fan Repair</td>
-          <td>2025-07-09</td>
-          <td>Jannat Ara</td>
-          <td><span class="badge canceled">Canceled</span></td>
-          <td>Service canceled by customer.</td>
-        </tr>
-        <tr>
-          <td>Fridge Maintenance</td>
-          <td>2025-07-05</td>
-          <td>Rifat Karim</td>
-          <td><span class="badge completed">Completed</span></td>
-          <td>Excellent work and polite behavior.</td>
-        </tr>
-      </tbody>
-    </table>
-        </div>
+    </thead>
+    <tbody>
+
+<?php
+if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $statusClass = strtolower($row['final_status']); // completed / cancelled
+
+        echo "<tr>
+                <td>" . htmlspecialchars($row['service_name']) . "</td>
+                <td>" . date("d M Y", strtotime($row['appointment_date'])) . "</td>
+                <td>" . htmlspecialchars($row['customer_name']) . "</td>
+                <td><span class='badge {$statusClass}'>" . $row['final_status'] . "</span></td>
+                <td>" . htmlspecialchars($row['feedback']) . "</td>
+            </tr>";
+    }
+} else {
+    echo "<tr><td colspan='5' style='text-align:center;'>No service history available</td></tr>";
+}
+?>
+
+    </tbody>
+</table>
+
+</div>
+
+
       </div>
 
       <div class="tabPanel" id="tab4">
@@ -763,103 +848,233 @@ $('#mchat-input').on('keypress', function (e) {
           <h2>Payment Information</h2>
         </div>
         <div class="payment-content">
-           <div class="summary-boxes">
-      <div class="summary-box">
-        <h3>Total Earnings</h3>
-        <p>৳ 18,250</p>
-      </div>
-      <div class="summary-box">
-        <h3>Pending Payments</h3>
-        <p>৳ 2,000</p>
-      </div>
+
+              <?php
+              include("connection.php");
+              $mechanic_id = $_SESSION['id'];
+
+              $sql_paid = "SELECT SUM(amount) AS total_paid 
+                          FROM payments 
+                          WHERE mechanic_id = ? AND status = 'Paid'";
+
+              $stmt_paid = $con->prepare($sql_paid);
+              $stmt_paid->bind_param("i", $mechanic_id);
+              $stmt_paid->execute();
+              $stmt_paid->bind_result($total_paid);
+              $stmt_paid->fetch();
+              $stmt_paid->close();
+
+              $total_paid = $total_paid ? $total_paid : 0;
+
+              $sql_unpaid = "SELECT SUM(amount) AS total_unpaid 
+                            FROM payments 
+                            WHERE mechanic_id = ? AND status = 'Unpaid'";
+
+              $stmt_unpaid = $con->prepare($sql_unpaid);
+              $stmt_unpaid->bind_param("i", $mechanic_id);
+              $stmt_unpaid->execute();
+              $stmt_unpaid->bind_result($total_unpaid);
+              $stmt_unpaid->fetch();
+              $stmt_unpaid->close();
+
+              $total_unpaid = $total_unpaid ? $total_unpaid : 0;
+
+
+              ?>
+
+    <!-- SUMMARY BOXES -->
+    <div class="summary-boxes">
+        <div class="summary-box">
+            <h3>Total Earnings</h3>
+            <p>৳ <?= number_format($total_paid, 2); ?></p>
+        </div>
+        <div class="summary-box">
+            <h3>Pending Payments</h3>
+            <p>৳ <?= number_format($total_unpaid, 2); ?></p>
+        </div>
     </div>
 
-    <table class="payments-table">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Service</th>
-          <th>Amount</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>2025-07-15</td>
-          <td>AC Maintenance</td>
-          <td>৳ 1,500</td>
-          <td><span class="badge paid">Paid</span></td>
-        </tr>
-        <tr>
-          <td>2025-07-14</td>
-          <td>Refrigerator Repair</td>
-          <td>৳ 2,000</td>
-          <td><span class="badge pending">Pending</span></td>
-        </tr>
-        <tr>
-          <td>2025-07-13</td>
-          <td>TV Mounting</td>
-          <td>৳ 1,200</td>
-          <td><span class="badge paid">Paid</span></td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="online-withdraw">
-      <h3>Withdraw Your Money Via</h3>
-      <div class="money">
-        <div class="bkash">
-          <a href="#">Bkash</a>
-        </div>
-        <div class="rocket">
-          <a href="#">Rocket</a>
-        </div>
-      </div>
-        
-    </div>
 
-        </div>
+    <!-- PAYMENT TABLE -->
+    <!-- PAYMENT TABLE -->
+<table class="payments-table">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Service</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Action</th> <!-- NEW -->
+        </tr>
+    </thead>
+    <tbody>
+
+<?php
+
+$sql = "SELECT 
+            p.payment_id,
+            p.amount,
+            p.status,
+            a.appointment_date,
+            a.description,
+            a.appointment_id,
+            c.full_name AS customer_name,
+            s.skills AS service_name
+        FROM payments p
+        JOIN appointments a ON p.appointment_id = a.appointment_id
+        JOIN customer c ON a.customer_id = c.customer_id
+        JOIN service s ON a.service_id = s.service_id
+        WHERE p.mechanic_id = ?
+        ORDER BY p.payment_id DESC";
+
+$stmt = $con->prepare($sql);
+$stmt->bind_param("i", $mechanic_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows > 0) {
+
+    while ($row = $result->fetch_assoc()) {
+        $status = strtolower($row['status']); 
+?>
+        <tr>
+            <td><?= htmlspecialchars($row['appointment_date']); ?></td>
+            <td><?= htmlspecialchars($row['service_name']); ?></td>
+            <td>৳ <?= number_format($row['amount'], 2); ?></td>
+            <td><span class="badge <?= $status ?>"><?= ucfirst($row['status']) ?></span></td>
+
+            <!-- NEW INVOICE BUTTON -->
+            <td>
+                <a href="invoice.php?pid=<?= $row['payment_id']; ?>" 
+                   target="_blank" 
+                   class="invoice-btn">Invoice</a>
+            </td>
+        </tr>
+
+<?php
+    }
+
+} else {
+    echo "<tr><td colspan='5' style='text-align:center;'>No payment records available</td></tr>";
+}
+
+?>
+    </tbody>
+</table>
+
+
+</div>
+
       </div>
+
+
+
       <div class="tabPanel" id="tab8">
         <div class="profile-head">
             <h2>Profile Information</h2>
         </div>
         <div class="profile-content">
-          <form action="">
-            <div class="profile-pic-section">
-        <img src="" alt="Profile Photo" id="profilePhoto">
-        <input type="file" id="uploadPhoto" accept="image/*">
-        <button>Save</button>
-      </div>
-          </form>
-             <form class="profile-form" id="profileForm">
-      
 
-      <label for="name">Full Name</label>
-      <input type="text" id="name" placeholder="e.g. Hasan Kabir" required>
+  <!-- PROFILE PHOTO -->
+  <form id="photoForm" enctype="multipart/form-data">
+    <div class="profile-pic-section">
+        <img src="../uploads/default.png" alt="Profile Photo" id="profilePhotoPreview">
+        <input type="file" name="photo" id="uploadPhoto" accept="image/*">
+        <button type="submit" class="save-btn">Save Photo</button>
+    </div>
+  </form>
 
-      <label for="email">Email</label>
-      <input type="email" id="email" placeholder="e.g. hasan@example.com" required>
+  <!-- PROFILE DETAILS -->
+  <form class="profile-form" id="profileForm">
 
-      <label for="phone">Phone Number</label>
-      <input type="tel" id="phone" placeholder="01XXXXXXXXX" required>
+      <label>Full Name</label>
+      <input type="text" id="name" name="name" placeholder="Full Name" required>
 
-      <label for="location">Location</label>
-      <input type="text" id="location" placeholder="e.g. Bashundhara, Dhaka" required>
+      <label>Email</label>
+      <input type="email" id="email" name="email" placeholder="Email" required>
 
-      <label for="services">Service Specialization</label>
-      <select id="services" required>
-        <option value="">-- Select --</option>
-        <option value="AC Repair">AC Repair</option>
-        <option value="Refrigerator Repair">Refrigerator Repair</option>
-        <option value="TV Installation">TV Installation</option>
-        <option value="Washing Machine Repair">Washing Machine Repair</option>
-        <option value="Fan Repair">Fan Repair</option>
-      </select>
+      <label>Phone Number</label>
+      <input type="tel" id="phone" name="phone" placeholder="Phone Number" required>
 
-      <button type="submit">Save Changes</button>
-    </form>
-                           
-              </div>
+      <label>Old Password</label>
+      <input type="password" id="oldpassword" name="oldpassword" placeholder="Old Password" required>
+
+      <label>New Password</label>
+      <input type="password" id="newpassword" name="newpassword" placeholder="New Password">
+
+      <p style="color: #e02424;">Note: If you don't want to change your current password, then no need to write anything in 'New Password' field, leave it blank!!</p>
+
+      <button type="submit" class="save-btn">Save Changes</button>
+  </form>
+<script>
+  $("#uploadPhoto").on("change", function () {
+    const file = this.files[0];
+    if (file) {
+        $("#profilePhotoPreview").attr("src", URL.createObjectURL(file));
+    }
+});
+$("#photoForm").on("submit", function(e) {
+    e.preventDefault();
+
+    let formData = new FormData(this);
+    formData.append("action", "update_photo");
+
+    $.ajax({
+        url: "profile_update.php",
+        type: "POST",
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(res) {
+
+            if (res.trim() === "successphoto") {
+                Swal.fire({
+                    icon: "success",
+                    title: "Photo Updated Successfully!",
+                    timer: 2000
+                });
+                setTimeout(() => location.reload(), 2000);
+
+            } else if (res.trim() === "invalidfile") {
+                Swal.fire("Invalid File", "Allowed: JPG, PNG, WEBP", "error");
+
+            } else {
+                Swal.fire("Error", "Something went wrong!", "error");
+            }
+        }
+    });
+});
+
+$("#profileForm").on("submit", function(e) {
+    e.preventDefault();
+
+    $.ajax({
+        url: "profile_update.php",
+        type: "POST",
+        data: $(this).serialize() + "&action=update_info",
+        success: function(res) {
+
+            if (res.trim() === "successinfo") {
+                Swal.fire({
+                    icon: "success",
+                    title: "Profile Updated!",
+                    timer: 2000
+                });
+
+            } else if (res.trim() === "wrongpassword") {
+                Swal.fire("Incorrect Password", "Old password doesn't match!", "error");
+
+            } else {
+                Swal.fire("Error", "Failed to update profile!", "error");
+            }
+        }
+    });
+});
+
+</script>
+
+</div>
+
             </div>
       <div class="tabPanel" id="tab9">
         <div class="review-head">

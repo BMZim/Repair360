@@ -179,7 +179,7 @@ if ($result->num_rows > 0) {
         <div class="service-card">
             <div class="card-header">
                 <div class="avatar">
-                    <img src="uploads/<?= htmlspecialchars($row['avatar']); ?>" alt="avatar">
+                    <img src="../uploads/<?= htmlspecialchars($row['avatar']); ?>" alt="avatar">
                 </div>
                 <div>
                     <div class="name">
