@@ -1,8 +1,19 @@
 <?php 
 session_start();
+include('connection.php');
 $valid =$_SESSION['id'];
 if($valid == true){
+  $sql ="select status from mechanic where mechanic_id = '$valid'";
+  $result = mysqli_query($con, $sql);
+  if(mysqli_num_rows($result)>0){
+    $row = mysqli_fetch_assoc($result);
+    $status = $row['status'];
+    if ($status === "Blocked"){
+      header("location:block_page.html");
+    }else{
 
+    }
+  }
 }else{
   header("location:mechanic_login.php");
 }
@@ -392,7 +403,7 @@ $sql_completed = "
           AND mr.customer_id = a.customer_id 
           AND mr.service_id = a.service_id
     WHERE a.mechanic_id = ?
-      AND a.status = 'Confirmed'
+      AND a.status = 'Completed'
       AND ts.status = 'Completed'
 ";
 
@@ -987,19 +998,14 @@ if ($result->num_rows > 0) {
   <!-- PROFILE DETAILS -->
   <form class="profile-form" id="profileForm">
 
-      <label>Full Name</label>
       <input type="text" id="name" name="name" placeholder="Full Name" required>
 
-      <label>Email</label>
       <input type="email" id="email" name="email" placeholder="Email" required>
 
-      <label>Phone Number</label>
       <input type="tel" id="phone" name="phone" placeholder="Phone Number" required>
 
-      <label>Old Password</label>
       <input type="password" id="oldpassword" name="oldpassword" placeholder="Old Password" required>
 
-      <label>New Password</label>
       <input type="password" id="newpassword" name="newpassword" placeholder="New Password">
 
       <p style="color: #e02424;">Note: If you don't want to change your current password, then no need to write anything in 'New Password' field, leave it blank!!</p>

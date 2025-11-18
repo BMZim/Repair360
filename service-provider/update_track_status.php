@@ -23,6 +23,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
              // ➕ Insert new record if not exists
             $insert = "INSERT INTO payments VALUES ('', '$appointment_id', '', '$mechanic_id', '', '', 'Unpaid', '', '', '')";
             mysqli_query($con, $insert);
+            $com = "UPDATE appointments SET status = 'Completed' where appointment_id = '$appontment_id'";
+            mysqli_query($con, $com);
         }else{
             
         }

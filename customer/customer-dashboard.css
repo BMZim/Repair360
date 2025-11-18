@@ -50,14 +50,26 @@
         border: none;
         cursor: pointer;
       }
-      .item1 .head-right img{
+      .item1 .head-right #notif-btn img{
         height: 40px;
         border-radius: 50px;
         padding: 5px;
         box-shadow: 0px 0px 10px black;
         transition: all 0.5s ease;
       }
-      .item1 .head-right img:hover{
+      .item1 .head-right #notif-btn img:hover{
+        transform: translateX(5px);
+      }
+      .item1 .head-right #prof-btn img{
+        height: 48px;
+        width: 46px;
+        border-radius: 50px;
+        margin-bottom: 10px;
+        padding: 5px;
+        box-shadow: 0px 0px 10px black;
+        transition: all 0.5s ease;
+      }
+      .item1 .head-right #prof-btn img:hover{
         transform: translateX(5px);
       }
       .item2{
@@ -474,56 +486,59 @@ line-height: 1.4;
   background: #f8f9fa;
 }
 
-.item3 .payments-container {
-max-width: 900px;
-margin: 50px auto;
-padding: 30px;
-background-color: #ffffff;
-border-radius: 10px;
-box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+.payments-content {
+    padding: 20px;
 }
 
-.item3 .payments-container h2 {
-margin-bottom: 20px;
-color: #333;
+.payments-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0px 0px 10px black;
+    transition: all 0.5s ease;
+}
+.payments-table:hover{
+  transform: translateY(-5px);
 }
 
-.item3 .payments-table {
-width: 100%;
-border-collapse: collapse;
+.payments-table th {
+    background: #005eff;
+    color: #fff;
+    padding: 12px;
 }
 
-.item3 .payments-table th,
-.item3 .payments-table td {
-padding: 12px 15px;
-border-bottom: 1px solid #e0e0e0;
-text-align: left;
+.payments-table td {
+    text-align: center;
+    padding: 12px;
+    border-bottom: 1px solid #eee;
 }
 
-.item3 .payments-table th {
-background-color: #f0f0f0;
-color: #333;
+.paid {
+    color: #0abf56;
+    font-weight: bold;
 }
 
-.item3 .payments-table td a {
-color: #2b6cb0;
-text-decoration: none;
-font-weight: 500;
+.unpaid {
+    color: #ff3535;
+    font-weight: bold;
 }
 
-.item3 .payments-table td a:hover {
-text-decoration: underline;
+.invoice-btn {
+    padding: 6px 12px;
+    background: #005eff;
+    color: white;
+    font-weight: bold;
+    border-radius: 6px;
+    text-decoration: none;
 }
 
-.item3 .paid {
-color: #155724;
-font-weight: bold;
+.invoice-btn:hover {
+    background: #003ecb;
 }
 
-.item3 .unpaid {
-color: #856404;
-font-weight: bold;
-}
 .paybill-content {
   display: flex;
   gap: 20px;
@@ -744,79 +759,94 @@ font-weight: bold;
 .item3 .review-form button:hover {
   background-color: #12ad6a;
 }
-.profile-content {
-  max-width: 600px;
-  margin: 50px auto;
+.item3 .profile-content {
+  display: flex;
+  gap: 40px;
   padding: 30px;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 0 8px rgba(0,0,0,0.1);
 }
 
-.profile-content h2 {
+.item3 .profile-pic-section {
   text-align: center;
-  margin-bottom: 20px;
-  color: #333;
+  background: #fff;
+  padding: 20px;
+  width: 280px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-.item3 .profile-container form {
-  display: flex;
-  flex-direction: column;
+.item3  #profilePhotoPreview {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #ddd;
+  margin-bottom: 10px;
 }
 
-.item3 .profile-container label {
-  margin-top: 12px;
-  font-weight: 500;
-  color: #333;
-}
-
-.item3 .profile-container input, textarea {
-  padding: 10px;
-  margin-top: 6px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  font-size: 14px;
-}
-
-.item3 .profile-container textarea {
-  resize: vertical;
-}
-
-.item3 .profile-container .button-group {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
-}
-
-.item3 .profile-container .button-group button {
-  padding: 10px 20px;
+.item3 .profile-pic-section .save-btn {
+  background: #28a745;
+  color: #fff;
+  padding: 10px 15px;
+  border-radius: 8px;
   border: none;
-  border-radius: 5px;
-  background-color: #17c17d;
-  color: white;
   cursor: pointer;
-  font-size: 14px;
-  transition: all 0.3s ease;
+  margin-top: 8px;
 }
 
-.item3 .profile-container .button-group button:hover {
-  background-color: #48e396;
-  box-shadow: 0px 0px 8px black;
-  transform: translateY(-5px);
+
+.item3 .profile-pic-section .save-btn:hover {
+  background: #218838;
 }
 
-.item3 .profile-container .button-group input {
-  background-color: #ccc;
-  color: #333;
-  padding: 10px 20px;
-  transition: all 0.3s ease;
+
+.item3 .profile-form {
+  flex: 1;
+  background: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-.item3 .profile-container .button-group input:hover {
-  background-color: #bbb;
-  transform: translateY(-5px);
+.item3 .profile-form .save-btn {
+  background: #28a745;
+  color: #fff;
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: none;
   cursor: pointer;
+  margin-top: 8px;
 }
+
+.item3 .profile-form .save-btn:hover {
+  background: #218838;
+}
+
+.profile-form label {
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.profile-form input {
+  width: 100%;
+  margin: 6px 0 15px;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+
+/* Responsive */
+@media (max-width: 850px) {
+  .item3 .profile-content {
+    flex-direction: column;
+  }
+  
+  .profile-pic-section, 
+  .profile-form {
+    width: 100%;
+  }
+}
+
 .item3 .emergency-content {
   max-width: 600px;
   margin: 40px auto;

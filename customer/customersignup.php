@@ -18,7 +18,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $postal_code = $_POST['pin'];
     $email       = $_POST['email'];
     $cusid         = $_POST['cusid'];
-    $status = "New User";
+    $status = "Active";
 
     // Hash password
     $password_hash = password_hash($password, PASSWORD_BCRYPT);

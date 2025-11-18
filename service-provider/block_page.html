@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Blocked</title>
+    
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f4f4f4;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card {
+            background: #ffffff;
+            padding: 40px;
+            width: 380px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
+            animation: fadeIn 0.6s ease;
+        }
+
+        .card h1 {
+            color: #d9534f;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            color: #555;
+            font-size: 16px;
+            margin-bottom: 25px;
+        }
+
+        .contact-btn {
+            display: inline-block;
+            padding: 12px 20px;
+            background: #0275d8;
+            color: #fff;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        .contact-btn:hover {
+            background: #025aa5;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="card">
+            <img src="https://icons.iconarchive.com/icons/elegantthemes/beautiful-flat/128/Caution-icon.png" width="128" height="128">
+
+            <h1>⚠ Account Blocked</h1>
+            <p>Your account has been blocked by the Administrator.<br>
+               Please contact the Administrator for assistance.</p>
+
+            <a href="../landing-page/about.html" class="contact-btn">Contact Administrator</a>
+        </div>
+    </div>
+</body>
+</html>

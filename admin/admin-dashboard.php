@@ -28,8 +28,7 @@ if($valid == true){
         
       </div>
       <div class="head-right">
-        <a href="#"><img src="img/bell.png" alt=""></a>
-        <a href="#"><img src="img/ChatGPT Image May 1, 2025, 11_29_51 AM.png" alt=""></a>
+        
       </div>
       
 
@@ -71,60 +70,69 @@ if($valid == true){
       </tr>
     </thead>
     <tbody id="userTableBody">
-      <?php
-      include("config.php");
+<?php
+include("config.php");
 
-      $sql = "
-        SELECT customer_id AS id, full_name, email, phone, status, 'Customer' AS role
-        FROM customer
-        UNION ALL
-        SELECT mechanic_id AS id, full_name, email, phone, status, 'Mechanic' AS role
-        FROM mechanic
-        ORDER BY 
-          CASE 
-            WHEN status = 'Not Verified' THEN 1 
-            WHEN status = 'Verified' THEN 2
-            WHEN status = 'New User' THEN 2
-            ELSE 3 
-          END,
-          role ASC,
-          full_name ASC
-      ";
+$sql = "
+  SELECT customer_id AS id, full_name, email, phone, status, 'Customer' AS role
+  FROM customer
+  UNION ALL
+  SELECT mechanic_id AS id, full_name, email, phone, status, 'Mechanic' AS role
+  FROM mechanic
+  ORDER BY 
+    CASE 
+      WHEN status = 'Not Verified' THEN 1 
+      WHEN status = 'Verified' THEN 2
+      WHEN status = 'New User' THEN 2
+      ELSE 3 
+    END,
+    role ASC,
+    full_name ASC
+";
 
-      $result = $conn->query($sql);
+$result = $conn->query($sql);
 
-      if ($result && $result->num_rows > 0) {
-          while ($row = $result->fetch_assoc()) {
-              $status = htmlspecialchars($row['status']);
-              $isNotVerified = ($status === 'Not Verified');
+if ($result && $result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $status = htmlspecialchars($row['status']);
 
-              echo "<tr>
-                      <td>{$row['id']}</td>
-                      <td>{$row['full_name']}</td>
-                      <td>{$row['role']}</td>
-                      <td>{$row['email']}</td>
-                      <td>{$row['phone']}</td>
-                      <td style='font-weight:600; color:" . 
-                        ($status === 'Verified' ? 'green' : ($status === 'Blocked' ? 'red' : 'orange')) . ";'>
-                        $status
-                      </td>
-                      <td>";
+        echo "<tr>
+                <td>{$row['id']}</td>
+                <td>{$row['full_name']}</td>
+                <td>{$row['role']}</td>
+                <td>{$row['email']}</td>
+                <td>{$row['phone']}</td>
+                <td style='font-weight:600; color:" . 
+                  ($status === 'Verified' ? 'green' : ($status === 'Blocked' ? 'red' : 'orange')) . ";'>
+                  $status
+                </td>
+                <td>";
 
-              if ($isNotVerified) {
-                  echo "<button class='action-btn approve-btn' data-id='{$row['id']}' data-role='{$row['role']}'>Approve</button>";
-              }
-              
-              echo "<button class='action-btn block-btn' data-id='{$row['id']}' data-role='{$row['role']}'>Block</button>
-                    <button class='action-btn view-btn' data-id='{$row['id']}' data-role='{$row['role']}'>View</button>
-                    <button class='action-btn delete-btn' data-id='{$row['id']}' data-role='{$row['role']}'>Delete</button>
-                  </td>
-                </tr>";
-          }
-      } else {
-          echo "<tr><td colspan='7' style='text-align:center; color:#999;'>No Users Found</td></tr>";
-      }
-      ?>
-    </tbody>
+        // Show Approve only if Not Verified
+        if ($status === 'Not Verified') {
+            echo "<button class='action-btn approve-btn' data-id='{$row['id']}' data-role='{$row['role']}'>Approve</button>";
+        }
+
+        // If Blocked → Show Unblock only
+        if ($status === 'Blocked') {
+            echo "<button class='action-btn unblock-btn' data-id='{$row['id']}' data-role='{$row['role']}'>Unblock</button>";
+        } 
+        // If NOT Blocked → Show Block button
+        else {
+            echo "<button class='action-btn block-btn' data-id='{$row['id']}' data-role='{$row['role']}'>Block</button>";
+        }
+
+        echo "
+                <button class='action-btn view-btn' data-id='{$row['id']}' data-role='{$row['role']}'>View</button>
+                <button class='action-btn delete-btn' data-id='{$row['id']}' data-role='{$row['role']}'>Delete</button>
+              </td>
+            </tr>";
+    }
+} else {
+    echo "<tr><td colspan='7' style='text-align:center; color:#999;'>No Users Found</td></tr>";
+}
+?>
+</tbody>
   </table>
 </div>
 <script>
@@ -138,15 +146,31 @@ $(document).on('click', '.approve-btn', function(){
     });
 });
 
+// BLOCK USER
 $(document).on('click', '.block-btn', function(){
     const id = $(this).data('id');
     const role = $(this).data('role');
     $.post('user_action.php', {action:'block', id:id, role:role}, function(res){
         if(res.trim() === 'OK'){
-            Swal.fire('Blocked!', 'User has been blocked.', 'warning').then(()=>location.reload());
+            Swal.fire('Blocked!', 'User has been blocked.', 'warning')
+                 .then(()=>location.reload());
         } else Swal.fire('Error', res, 'error');
     });
 });
+
+// UNBLOCK USER
+$(document).on('click', '.unblock-btn', function(){
+    const id = $(this).data('id');
+    const role = $(this).data('role');
+
+    $.post('user_action.php', {action:'unblock', id:id, role:role}, function(res){
+        if(res.trim() === 'OK'){
+            Swal.fire('Unblocked!', 'User has been unblocked.', 'success')
+                 .then(()=>location.reload());
+        } else Swal.fire('Error', res, 'error');
+    });
+});
+
 
 $(document).on('click', '.delete-btn', function(){
     const id = $(this).data('id');

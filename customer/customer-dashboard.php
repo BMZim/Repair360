@@ -1,7 +1,20 @@
 <?php 
 session_start();
+include('db.php');
 $valid =$_SESSION['customer_id'];
 if($valid == true){
+
+  $sql ="select status from customer where customer_id = '$valid'";
+  $result = mysqli_query($conn, $sql);
+  if(mysqli_num_rows($result)>0){
+    $row = mysqli_fetch_assoc($result);
+    $status = $row['status'];
+    if ($status === "Blocked"){
+      header("location:block_page.html");
+    }else{
+
+    }
+  }
 
 }else{
   header("location:customer-login.php");
@@ -107,8 +120,24 @@ function markAsRead(){
 });
 </script>
 
+      <button id="prof-btn">
+        <?php 
+            include("db.php");
+            $customer_id = $_SESSION['customer_id'];
 
-        <button><img src="img/ChatGPT Image May 1, 2025, 11_29_51 AM.png" alt=""></button>
+            $sql = "SELECT avatar FROM customer WHERE customer_id = '$customer_id'";
+            $result = mysqli_query($conn, $sql);
+
+            if ($result && mysqli_num_rows($result) > 0) {
+                $row = mysqli_fetch_assoc($result);
+                $photo = $row['avatar'] ? $row['avatar'] : 'default.png';
+            } else {
+                $photo = "default.png";
+            }
+            ?>
+
+            <img src="../uploads/<?php echo $photo; ?>" alt="Profile Photo">
+        </button>
       </div>
       
 
@@ -681,50 +710,88 @@ $('#chat-input').on('keypress', function(e){
           <h2>Payment Invoices</h2>
         </div>
         <div class="payments-content">
-           <div class="payments-container"> 
-             <table class="payments-table"> 
-              <thead> 
-                <tr> 
-                  <th>Service ID</th>
-                  <th>Service</th> 
-                  <th>Date</th> 
-                  <th>Amount</th> 
-                  <th>Status</th> 
-                  <th>Invoice</th> 
-                </tr> 
-              </thead> 
-              <tbody> 
-                <tr>
-                  <td>012345</td> 
-                  <td>AC Repair</td> 
-                  <td>2025-07-10</td> 
-                  <td>৳1500</td> 
-                  <td class="paid">Paid</td> 
-                  <td><a href="#">Download</a></td> 
-                </tr>
-                 <tr> 
-                  <td>012345</td> 
-                  <td>Fan Replacement</td> 
-                  <td>2025-07-14</td> 
-                  <td>৳850</td> 
-                  <td class="unpaid">Unpaid</td> 
-                  <td><a href="#">Generate</a></td> 
-                </tr> 
-                <tr> 
-                  <td>012345</td> 
-                  <td>TV Wall Mount</td> 
-                  <td>2025-07-16</td> 
-                  <td>৳1200</td> 
-                  <td class="paid">Paid</td> 
-                  <td><a href="#">Download</a>
-                  </td> 
-                </tr> 
-              </tbody> 
-            </table> 
-          </div> 
+    <div class="payments-container">
+
+<?php
+include("db.php");
+$customer_id = $_SESSION["customer_id"];
+
+// Fetch completed services with payment info
+$sql = "
+SELECT 
+    a.appointment_id,
+    a.appointment_date,
+    a.fee AS amount,
+    s.skills AS service_name,
+    s.service_id,
+    m.full_name AS mechanic_name,
+    p.payment_id,
+    COALESCE(p.status, 'Unpaid') AS payment_status,
+    ts.status AS track_status
+FROM appointments a
+JOIN service s ON a.service_id = s.service_id
+JOIN mechanic m ON a.mechanic_id = m.mechanic_id
+JOIN track_status ts ON a.appointment_id = ts.appointment_id
+LEFT JOIN payments p ON a.appointment_id = p.appointment_id
+WHERE a.customer_id = ?
+AND ts.status = 'Completed'
+ORDER BY a.appointment_date DESC
+";
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $customer_id);
+$stmt->execute();
+$result = $stmt->get_result();
+?>
+
+<table class="payments-table">
+    <thead>
+        <tr>
+            <th>Service ID</th>
+            <th>Service</th>
+            <th>Date</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Invoice</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+<?php
+if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+
+        $statusClass = strtolower($row['payment_status']); // paid / unpaid
+
+        echo "
+        <tr>
+            <td>{$row['service_id']}</td>
+            <td>{$row['service_name']}</td>
+            <td>{$row['appointment_date']}</td>
+            <td>৳ " . number_format($row['amount'], 2) . "</td>
+            <td class='{$statusClass}'>" . ucfirst($row['payment_status']) . "</td>
+            <td>
+                <a href='invoice_customer.php?pid={$row['payment_id']}' target='_blank' class='invoice-btn'>
+                    Download
+                </a>
+            </td>
+        </tr>";
+    }
+} else {
+    echo "<tr><td colspan='6' style='text-align:center;'>No completed services found</td></tr>";
+}
+?>
+    </tbody>
+</table>
+
+    </div>
+</div>
+
 
         </div>
-        </div>
+
+
         <div class="tabPanel">
         <div class="paybill-head">
           <h2>Pay Bill</h2>
@@ -987,34 +1054,99 @@ $(document).on("click", ".deleteReview", function(){
             <h2>Profile Information</h2>
         </div>
         <div class="profile-content">
-            <div class="profile-container">
-    <h2>Profile Settings</h2>
-    <form id="profileForm" onsubmit="updateProfile(event)">
-      <label for="name">Full Name</label>
-      <input type="text" id="name" placeholder="Your full name" required>
 
-      <label for="email">Email Address</label>
-      <input type="email" id="email" placeholder="you@example.com" required>
-
-      <label for="phone">Phone Number</label>
-      <input type="tel" id="phone" placeholder="01XXXXXXXXX" required>
-
-      <label for="address">Address</label>
-      <textarea id="address" placeholder="Your full address" rows="3" required></textarea>
-
-      <label for="password">New Password</label>
-      <input type="password" id="password" placeholder="Leave blank to keep current password">
-
-      <div class="button-group">
-        <button type="submit">Update Profile</button>
-        <input type="reset">
-      </div>
+    <!-- PROFILE PHOTO SECTION -->
+    <form id="photoForm" enctype="multipart/form-data">
+        <div class="profile-pic-section">
+            <img src="../uploads/default.png" id="profilePhotoPreview">
+            <input type="file" name="photo" id="uploadPhoto" accept="image/*">
+            <button type="submit" class="save-btn">Save Photo</button>
+        </div>
     </form>
-  </div>
 
-  <script src="script.js"></script>
-                           
-              </div>
+    <!-- PROFILE INFO SECTION -->
+    <form class="profile-form" id="profileForm">
+        <input type="text" id="name" name="name" placeholder="Full Name" required>
+
+        <input type="email" id="email" name="email" placeholder="Email" required>
+
+        <input type="tel" id="phone" name="phone" placeholder="Phone Number" required>
+
+        <textarea id="address" name="address" placeholder="Address" rows="3"></textarea>
+
+        <input type="password" id="oldpassword" placeholder="Old Password" name="oldpassword">
+
+        <input type="password" id="newpassword" placeholder="New Password" name="newpassword">
+
+        <p style="color: #e02424;">Note: If you don't want to change your current password, then no need to write anything in 'New Password' field, leave it blank!!</p>
+
+        <button type="submit" class="save-btn">Save Changes</button>
+    </form>
+</div>
+
+<script>
+
+  $("#uploadPhoto").on("change", function () {
+    const file = this.files[0];
+    if (file) {
+        $("#profilePhotoPreview").attr("src", URL.createObjectURL(file));
+    }
+});
+/* ---------------- PHOTO UPLOAD ---------------- */
+$("#photoForm").submit(function(e){
+    e.preventDefault();
+
+    let formData = new FormData(this);
+    formData.append("action", "update_photo");
+
+    $.ajax({
+        url: "profile_update.php",
+        type: "POST",
+        data: formData,
+        contentType: false,
+        processData: false,
+
+        success: function(res){
+            if(res.trim() === "successphoto"){
+                Swal.fire("Success!", "Profile photo updated!", "success");
+                setTimeout(()=> location.reload(), 1500);
+            }
+            else if(res.trim() === "invalidfile"){
+                Swal.fire("Invalid!", "Only JPG, PNG, JPEG, WEBP allowed.", "error");
+            }
+        }
+    });
+});
+
+/* ---------------- PROFILE INFO UPDATE ---------------- */
+$("#profileForm").submit(function(e){
+    e.preventDefault();
+
+    let formData = new FormData(this);
+    formData.append("action", "update_info");
+
+    $.ajax({
+        url: "profile_update.php",
+        type: "POST",
+        data: formData,
+        processData: false,
+        contentType: false,
+
+        success: function(res){
+            if(res.trim() === "wrongpassword"){
+                Swal.fire("Error", "Old password is incorrect!", "error");
+            }
+            else if(res.trim() === "successinfo"){
+                Swal.fire("Updated!", "Profile updated successfully!", "success");
+            }
+            else{
+                Swal.fire("Error", "Something went wrong!", "error");
+            }
+        }
+    });
+});
+</script>
+
             </div>
 
 
