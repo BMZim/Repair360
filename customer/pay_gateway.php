@@ -9,60 +9,91 @@ function get_req($key, $default = null) {
 $appointment_id = intval(get_req('appointment_id', 0));
 $customer_id    = intval(get_req('customer_id', 0));
 $mechanic_id    = intval(get_req('mechanic_id', 0));
-$amount         = get_req('amount', '0.00');
 
-$amount = preg_replace('/[^0-9.]/', '', $amount);
-if ($amount === '') $amount = '0.00';
-$amount = number_format((float)$amount, 2, '.', '');
+$base_amount    = get_req('amount', '0.00');
+$total_amount   = get_req('total', '0.00');
+$platform_fee   = get_req('platform_fee', '0.00');
+$vat_amount     = get_req('vat_amount', '0.00');
 
-// 🧠 Fetch mechanic name
+$base_amount  = number_format((float)$base_amount, 2, '.', '');
+$total_amount = number_format((float)$total_amount, 2, '.', '');
+$platform_fee = number_format((float)$platform_fee, 2, '.', '');
+$vat_amount   = number_format((float)$vat_amount, 2, '.', '');
+
+// mechanic name
 $mechanic_name = "Unknown Mechanic";
 if ($mechanic_id > 0) {
-    $mquery = $conn->prepare("SELECT full_name FROM mechanic WHERE mechanic_id = ?");
-    $mquery->bind_param("i", $mechanic_id);
-    $mquery->execute();
-    $mquery->bind_result($mechanic_full_name);
-    if ($mquery->fetch()) {
-        $mechanic_name = $mechanic_full_name;
-    }
-    $mquery->close();
+    $q = $conn->prepare("SELECT full_name FROM mechanic WHERE mechanic_id = ?");
+    $q->bind_param("i", $mechanic_id);
+    $q->execute();
+    $q->bind_result($mn);
+    if ($q->fetch()) $mechanic_name = $mn;
+    $q->close();
 }
 
-$payment_success = false; // 🔹 flag for JS SweetAlert
+$payment_success = false;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pay_now'])) {
-    $appointment_id = intval($_POST['appointment_id'] ?? 0);
-    $customer_id    = intval($_POST['customer_id'] ?? 0);
-    $mechanic_id    = intval($_POST['mechanic_id'] ?? 0);
-    $amount         = preg_replace('/[^0-9.]/', '', $_POST['amount'] ?? '0.00');
-    $amount         = number_format((float)$amount, 2, '.', '');
-    $method         = 'bkash';
-    $note           = substr($_POST['note'] ?? '', 0, 500);
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['pay_now'])) {
+
+    $appointment_id = intval($_POST['appointment_id']);
+    $customer_id    = intval($_POST['customer_id']);
+    $mechanic_id    = intval($_POST['mechanic_id']);
+
+    $base_amount  = number_format((float)$_POST['amount'], 2, '.', '');
+    $total_amount = number_format((float)$_POST['total'], 2, '.', '');
+    $platform_fee = number_format((float)$_POST['platform_fee'], 2, '.', '');
+    $vat_amount   = number_format((float)$_POST['vat_amount'], 2, '.', '');
+
+    $method         = "bkash";
     $transaction_id = $_POST['transaction'] ?? '';
+    $note           = $_POST['note'] ?? '';
 
-    if ($appointment_id > 0 && $customer_id > 0 && (float)$amount > 0) {
-        $check = $conn->prepare("SELECT payment_id FROM payments WHERE appointment_id = ?");
-        $check->bind_param("i", $appointment_id);
-        $check->execute();
-        $check->store_result();
+    $update = $conn->prepare("
+        UPDATE payments SET 
+            customer_id=?, mechanic_id=?, amount=?, 
+            platform_fee=?, vat_amount=?, total=?, 
+            method=?, status='Paid', transaction_id=?, note=?, created_at=NOW()
+        WHERE appointment_id=?
+    ");
 
-        if ($check->num_rows > 0) {
-            // Update existing record
-            $update = $conn->prepare("UPDATE payments 
-                SET customer_id = ?, mechanic_id = ?, amount = ?, method = ?, status = 'Paid', 
-                    transaction_id = ?, note = ?, created_at = NOW() 
-                WHERE appointment_id = ?");
-            $update->bind_param("iissssi", $customer_id, $mechanic_id, $amount, $method, $transaction_id, $note, $appointment_id);
-            if ($update->execute()) {
-                $payment_success = true;
-            }
-            $update->close();
+    $update->bind_param(
+        "iiddddsssi",
+        $customer_id,
+        $mechanic_id,
+        $base_amount,
+        $platform_fee,
+        $vat_amount,
+        $total_amount,
+        $method,
+        $transaction_id,
+        $note,
+        $appointment_id
+    );
+
+    if ($update->execute()) {
+      $sql = "select * from platform_charge where mechanic_id = '$mechanic_id'";
+      $result = mysqli_query($conn, $sql);
+      if(mysqli_num_rows($result)>0){
+        $row = mysqli_fetch_assoc($result);
+        $previous_p_f = $row['platform_fee'];
+        $new_p_f = $previous_p_f + $platform_fee;
+        $sql1 = "update platform_charge set platform_fee ='$new_p_f'";
+        $result1 = mysqli_query($conn, $sql1);
+      }else{
+        $sql2 = "insert into platform_charge values('', '$mechanic_id', '0', '', '', '')";
+        $result2 = mysqli_query($conn, $sql2);
+        if($result2){
+          $sql3 = "update platform_charge set platform_fee ='$platform_fee'";
+        $result3 = mysqli_query($conn, $sql3);
         }
-        $check->close();
+      }
+        $payment_success = true;
     }
+    $update->close();
 }
 
-$displayAmount = number_format((float)$amount, 2);
+
+$displayAmount = number_format((float)$total_amount, 2);
 $customerDisplay = $customer_id ? "Customer ID: {$customer_id}" : "Customer";
 $serviceRef = $appointment_id ? "Appointment #{$appointment_id}" : "Service";
 ?>
@@ -110,7 +141,11 @@ input[type="text"],textarea{width:100%;padding:10px;border:1px solid #e6e9ef;bor
       <input type="hidden" name="appointment_id" value="<?= htmlspecialchars($appointment_id) ?>">
       <input type="hidden" name="customer_id" value="<?= htmlspecialchars($customer_id) ?>">
       <input type="hidden" name="mechanic_id" value="<?= htmlspecialchars($mechanic_id) ?>">
-      <input type="hidden" name="amount" value="<?= htmlspecialchars($displayAmount) ?>">
+      <input type="hidden" name="amount" value="<?= htmlspecialchars($base_amount) ?>">
+      <input type="hidden" name="total" value="<?= htmlspecialchars($total_amount) ?>">
+      <input type="hidden" name="platform_fee" value="<?= htmlspecialchars($platform_fee) ?>">
+      <input type="hidden" name="vat_amount" value="<?= htmlspecialchars($vat_amount) ?>">
+
 
       <label for="receiver_acc">Pay To (Mechanic)</label>
       <input type="text" id="receiver_acc" value="<?= htmlspecialchars($mechanic_name) ?>" readonly>

@@ -13,6 +13,9 @@ $sql = "SELECT
             p.method,
             p.created_at,
             p.transaction_id,
+            p.platform_fee,
+            p.vat_amount,
+            p.total,
             a.appointment_id,
             a.fee,
             a.appointment_date,
@@ -256,12 +259,16 @@ $html = '
             <td>'.$data["amount"].' Taka</td>
         </tr>
         <tr>
-            <td><b>Tax (0%):</b></td>
-            <td>0.00 Taka</td>
+            <td><b>Platform Fee (2%):</b></td>
+            <td>'.$data["platform_fee"].' Taka</td>
+        </tr>
+        <tr>
+            <td><b>VAT (15%):</b></td>
+            <td>'.$data["vat_amount"].' Taka</td>
         </tr>
         <tr>
             <td><b>Total:</b></td>
-            <td><b>'.$data["amount"].' Taka</b></td>
+            <td><b>'.$data["total"].' Taka</b></td>
         </tr>
     </table>
 

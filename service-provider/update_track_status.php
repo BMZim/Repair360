@@ -20,10 +20,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->bind_param("si",  $status, $appointment_id);
 
         if($status === 'Completed'){
+
+            $amount = "select * from appointments where appointment_id = '$appointment_id'";
+            $value = mysqli_query($con, $amount);
+            $row = mysqli_fetch_assoc($value);
+            $fee = $row['fee'];
+
              // ➕ Insert new record if not exists
-            $insert = "INSERT INTO payments VALUES ('', '$appointment_id', '', '$mechanic_id', '', '', 'Unpaid', '', '', '')";
+            $insert = "INSERT INTO payments VALUES ('', '$appointment_id', '', '$mechanic_id', '$fee', '', '', '', '', 'Unpaid', '', '', '')";
             mysqli_query($con, $insert);
-            $com = "UPDATE appointments SET status = 'Completed' where appointment_id = '$appontment_id'";
+            $com = "UPDATE appointments SET status = 'Completed' where appointment_id = '$appointment_id'";
             mysqli_query($con, $com);
         }else{
             

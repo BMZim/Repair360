@@ -729,7 +729,7 @@ $mechanic_id = intval($_SESSION['id']);
 
           echo '<li class="mchat-user" data-appointment="'.intval($appointment_id).'" data-customer="'.intval($customer_id).'" 
                 style="padding:10px; display:flex; gap:10px; align-items:center; border-bottom:1px solid #f0f0f0; cursor:pointer; position:relative;">
-                <img src="uploads/'. $avatar .'" style="width:44px; height:44px; border-radius:50%; object-fit:cover;">
+                <img src="../uploads/'. $avatar .'" style="width:44px; height:44px; border-radius:50%; object-fit:cover;">
                 <div style="flex:1;">
                   <div style="font-weight:600;">'.htmlspecialchars($customer_name).'</div>
                   <div style="font-size:13px; color:#666;">'.$snippet.'</div>
@@ -890,6 +890,11 @@ $('#mchat-input').on('keypress', function (e) {
 
               $total_unpaid = $total_unpaid ? $total_unpaid : 0;
 
+              $sql_platform_p = "select * from platform_charge where mechanic_id = '$mechanic_id'";
+              $pp = mysqli_query($con, $sql_platform_p);
+              $rowP = mysqli_fetch_assoc($pp);
+              $total_pp = $rowP['platform_fee'];
+
 
               ?>
 
@@ -903,10 +908,15 @@ $('#mchat-input').on('keypress', function (e) {
             <h3>Pending Payments</h3>
             <p>৳ <?= number_format($total_unpaid, 2); ?></p>
         </div>
+        <div class="summary-box">
+            <h3>Pending Platform Fee</h3>
+            <p>৳ <?= number_format($total_pp, 2); ?></p>
+            <a href="platform_payment.php?mechanic_id=<?= $mechanic_id; ?>" 
+                   target="_blank" 
+                   class="invoice-btn">Pay Now</a>
+        </div>
     </div>
 
-
-    <!-- PAYMENT TABLE -->
     <!-- PAYMENT TABLE -->
 <table class="payments-table">
     <thead>

@@ -52,9 +52,24 @@ if($valid == true){
                 <h2>Manage User</h2>
                 <form class="search-bar">
                     <input type="text" placeholder="Search an user" />
-                    <button type="submit">&#128269;</button>
+                    <button id="searchuser" type="submit">&#128269;</button>
                 </form>
-            
+                <script>
+// LIVE SEARCH
+$(".search-bar input").on("keyup", function () {
+    let keyword = $(this).val().trim();
+
+    $.post("search_user.php", { search: keyword }, function (data) {
+        $("#userTableBody").html(data);
+    });
+});
+
+// Prevent form submission
+$(".search-bar").on("submit", function(e){
+    e.preventDefault();
+});
+</script>
+      
         </div>
         <div class="manage-user-content">
   <table class="user-table">
@@ -170,7 +185,6 @@ $(document).on('click', '.unblock-btn', function(){
         } else Swal.fire('Error', res, 'error');
     });
 });
-
 
 $(document).on('click', '.delete-btn', function(){
     const id = $(this).data('id');
@@ -324,7 +338,7 @@ $(document).on('click','.delete-btn-ser',function(){
           <h2>Booking Overview Details</h2>
         </div>
         <div class="booking-content">
-  <!-- 🔍 Search Box -->
+  <!-- Search Box -->
   <form id="searchBookingForm" style="margin-bottom:15px;">
     <input type="text" id="searchBooking" placeholder="Search by Customer, Mechanic, or Service ID..." 
            style="padding:8px 12px; width:250px; border:1px solid #ccc; border-radius:5px;">
@@ -383,7 +397,7 @@ $(document).on('click','.delete-btn-ser',function(){
 </div>
 
 <script>
-// 🔍 Handle search
+//  Handle search
 $('#searchBookingForm').on('submit', function(e){
   e.preventDefault();
   const query = $('#searchBooking').val().trim();
@@ -398,7 +412,7 @@ $('#searchBookingForm').on('submit', function(e){
   });
 });
 
-// 🗑 Cancel button
+//  Cancel button
 $(document).on('click', '.cancel-btn', function(){
   const id = $(this).data('id');
   if(confirm('Are you sure you want to cancel this booking?')){
@@ -422,29 +436,92 @@ $(document).on('click', '.cancel-btn', function(){
           <h2>Analytics Dashboard</h2>
         </div>
         <div class="analytics-content">
-           <div class="overview-cards">
-      <div class="card">
-        <h3>Total Bookings</h3>
-        <p id="totalBookings">0</p>
-      </div>
-      <div class="card">
-        <h3>Total Users</h3>
-        <p id="totalUsers">0</p>
-      </div>
+
+  <div class="overview-cards">
+    <div class="card">
+      <h3>Total Bookings</h3>
+      <p id="totalBookings">0</p>
     </div>
 
-    <div class="charts">
-      <div class="chart-card">
-        <h4>Monthly Bookings</h4>
-        <canvas id="bookingChart"></canvas>
-      </div>
-      <div class="chart-card">
-        <h4>Monthly Revenue</h4>
-        <canvas id="revenueChart"></canvas>
-      </div>
+    <div class="card">
+      <h3>Total Users</h3>
+      <p id="totalUsers">0</p>
     </div>
-      
-        </div>
+
+    <div class="card">
+      <h3>Total Revenue</h3>
+      <p id="totalRevenue">0</p>
+    </div>
+  </div>
+
+  <div class="charts">
+    <div class="chart-card">
+      <h4>Monthly Bookings</h4>
+      <canvas id="bookingChart"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <h4>Monthly Revenue</h4>
+      <canvas id="revenueChart"></canvas>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  fetch("admin_analytics_data.php")
+    .then(res => res.json())
+    .then(data => {
+
+      // Update Overview Boxes
+      document.getElementById("totalBookings").innerText = data.totalBookings;
+      document.getElementById("totalUsers").innerText = data.totalUsers;
+      document.getElementById("totalRevenue").innerText = "BDT " + parseFloat(data.totalRevenue).toFixed(2);
+
+      // Prepare Monthly Booking Chart
+      const bookingLabels = data.monthlyBookings.map(x => x.month);
+      const bookingValues = data.monthlyBookings.map(x => x.total);
+
+      new Chart(document.getElementById("bookingChart"), {
+        type: "line",
+        data: {
+          labels: bookingLabels,
+          datasets: [{
+            label: "Bookings",
+            data: bookingValues,
+            fill: true,
+            borderColor: "#007bff",
+            backgroundColor: "rgba(0, 123, 255, 0.2)",
+            tension: 0.3
+          }]
+        }
+      });
+
+      // Prepare Monthly Revenue Chart
+      const revenueLabels = data.monthlyRevenue.map(x => x.month);
+      const revenueValues = data.monthlyRevenue.map(x => x.revenue);
+
+      new Chart(document.getElementById("revenueChart"), {
+        type: "bar",
+        data: {
+          labels: revenueLabels,
+          datasets: [{
+            label: "Revenue (BDT)",
+            data: revenueValues,
+            backgroundColor: "#28a745",
+            borderColor: "#1e7e34",
+            borderWidth: 1
+          }]
+        }
+      });
+
+    });
+
+});
+</script>
+
 
       </div>
       <div class="tabPanel">
@@ -452,69 +529,227 @@ $(document).on('click', '.cancel-btn', function(){
           <h2>Payments & Invoices</h2>
         </div>
         <div class="payment-content">
-            <table class="payment-table">
-      <thead>
-        <tr>
-          <th>Invoice #</th>
-          <th>Customer</th>
-          <th>Service</th>
-          <th>Amount (৳)</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="paymentTableBody">
-        <td>2345434</td>
-      <td>Zim</td>
-      <td>AC Repair</td>
-      <td>1500</td>
-      <td><span class="status">Paid</span></td>
-      <td><button class="download-btn">Download</button></td>
-      </tbody>
-    </table>
 
-        </div>
+  <!--Live Search Bar -->
+  <div style="text-align:right; margin-bottom:15px;">
+    <input type="text" id="searchInput" placeholder="Search payments…" 
+           style="padding:8px; width:250px; border:1px solid #ccc; border-radius:5px;">
+  </div>
+
+  <table class="payment-table">
+    <thead>
+      <tr>
+        <th>Payment ID</th>
+        <th>Customer</th>
+        <th>Mechanic</th>
+        <th>Service</th>
+        <th>Amount (৳)</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+
+    <tbody id="paymentTableBody">
+      <!-- AJAX data loads here -->
+    </tbody>
+  </table>
+
+</div>
+
+<script>
+function loadPayments(search = "") {
+    $.ajax({
+        url: "invoice_search.php",
+        type: "POST",
+        data: { search: search },
+        success: function(data) {
+            $("#paymentTableBody").html(data);
+        }
+    });
+}
+
+// Load all payments initially
+loadPayments();
+
+// Live search while typing
+$("#searchInput").on("keyup", function () {
+    let value = $(this).val();
+    loadPayments(value);
+});
+</script>
+
+
         </div>
       <div class="tabPanel">
         <div class="reviews-head">
           <h2>Reviews History</h2>
         </div>
         <div class="review-content">
-          <div id="reviewList" class="review-list">
-      <!-- Reviews will be injected here -->
-       <h4>Zim → Chinmoy</h4>
-      <div class="stars">★☆</div>
-      <p>Good</p>
-      <div class="action-buttons">
-        <button class="flag-btn" >OK</button>
-        <button class="delete-btn">Delete</button>
-      </div>
-          </div>
 
-        </div>
+  <h2 style="margin-bottom:15px;">All Ratings & Reviews</h2>
+
+  <div id="reviewList" class="review-list">
+      
+  </div>
+
+</div>
+
+<script>
+// Load reviews on page load
+function loadReviews() {
+    $.ajax({
+        url: "load_reviews.php",
+        type: "POST",
+        success: function(data) {
+            $("#reviewList").html(data);
+        }
+    });
+}
+
+loadReviews();
+
+// Delete Review
+$(document).on("click", ".delete-btn", function() {
+    let id = $(this).data("id");
+    let type = $(this).data("type");
+
+    Swal.fire({
+        title: "Delete Review?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        confirmButtonText: "Delete"
+    }).then((res) => {
+        if (res.isConfirmed) {
+            $.post("delete_reviews.php", { id: id, type: type }, function(response) {
+                if (response.trim() === "OK") {
+                    Swal.fire("Deleted!", "Review removed.", "success");
+                    loadReviews();
+                } else {
+                    Swal.fire("Error", response, "error");
+                }
+            });
+        }
+    });
+});
+
+
+// Flag Review
+$(document).on("click", ".flag-btn", function() {
+    Swal.fire("Flagged!", "Marked as reviewed by admin.", "success");
+});
+</script>
+
       </div>
       <div class="tabPanel">
         <div class="profile-head">
             <h2>Profile Information</h2>
         </div>
         <div class="profile-content">
-    <form class="settings-form">
+  <div class="support-d">
+<div style="display: flex; justify-content:center; gap:10px; color:red; ">
+  <?php 
 
+  include('config.php');
+
+  $sql = "select * from service_charge";
+  $result = mysqli_query($conn, $sql);
+
+  $row = mysqli_fetch_assoc($result);
+
+
+
+
+  ?>
+<p>Old VAT Amount: <?= $row['vat_amount'] ?> %</p>
+<p>-----</p>
+      <p>Old Platform Fee: <?= $row['platform_fee'] ?> %</p>
+    <!-- SUPPORT INFO FORM -->
+</div>
+<div class="settings-data">
+  <form class="settings-form" id="supportForm">
       <label>
         Support Email:
-        <input type="email" placeholder="support@repair360.com" />
+        <input type="email" id="support_email" placeholder="support@repair360.com" required />
       </label>
 
       <label>
         Support Phone:
-        <input type="tel" placeholder="+8801XXXXXXXXX" />
+        <input type="tel" id="support_phone" placeholder="+8801XXXXXXXXX" required />
       </label>
 
       <button type="submit">Save Settings</button>
     </form>
-                           
-              </div>
+
+    <!-- SERVICE CHARGE FORM -->
+    <form class="settings-form" id="chargeForm">
+      <label>
+        New VAT Amount:
+        <input type="number" id="vat_amount" required />
+      </label>
+
+      <label>
+        New Platform Fee:
+        <input type="number" id="platform_fee" required />
+      </label>
+
+      <button type="submit">Update</button>
+    </form>
+</div>
+  </div>
+</div>
+
+<!-- AJAX LOGIC -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+
+// SAVE SUPPORT INFO
+$("#supportForm").on("submit", function(e){
+    e.preventDefault();
+
+    let email = $("#support_email").val().trim();
+    let phone = $("#support_phone").val().trim();
+
+    $.post("update_settings.php", {
+        action: "update_contact",
+        email: email,
+        phone: phone
+    }, function(res){
+        if(res.trim() === "OK"){
+            Swal.fire("Success!", "Support details updated.", "success");
+        } else {
+            Swal.fire("Error!", res, "error");
+        }
+    });
+});
+
+
+// UPDATE VAT & PLATFORM FEE
+$("#chargeForm").on("submit", function(e){
+    e.preventDefault();
+
+    let vat = $("#vat_amount").val().trim();
+    let fee = $("#platform_fee").val().trim();
+
+    $.post("update_settings.php", {
+        action: "update_charges",
+        vat: vat,
+        fee: fee
+    }, function(res){
+        if(res.trim() === "OK"){
+            Swal.fire("Updated!", "VAT & Platform fee updated.", "success");
+        } else {
+            Swal.fire("Error!", res, "error");
+        }
+    });
+});
+
+</script>
+
             </div>
+
       <div class="tabPanel">
         <div class="support-head">
           <h2>User Support Center</h2>

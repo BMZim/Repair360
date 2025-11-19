@@ -518,7 +518,7 @@
   color: #856404;
 }
 
-.item3 .payment-content .failed {
+.item3 .payment-content .unpaid {
   background-color: #f8d7da;
   color: #721c24;
 }
@@ -617,9 +617,15 @@
   margin-bottom: 25px;
 }
 
+.item3 .profile-content .settings-data {
+  display: flex;
+  justify-content: space-around;
+  gap: 20px;
+}
 .item3 .profile-content .settings-form {
   display: flex;
   flex-direction: column;
+  justify-content: space-around;
   gap: 20px;
 }
 
@@ -629,7 +635,6 @@
   flex-direction: column;
   color: #333;
 }
-profile-content
 .item3 .profile-content .settings-form input,
 .item3 .profile-content  .settings-form select {
   padding: 10px;

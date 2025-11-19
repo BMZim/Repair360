@@ -572,7 +572,7 @@ $customer_id = intval($_SESSION['customer_id']);
 
           echo '<li class="chat-user" data-appointment="'.intval($appointment_id).'" data-mechanic="'.intval($mechanic_id).'" 
                     style="padding:10px; display:flex; gap:10px; align-items:center; border-bottom:2px solid #f0f0f0; cursor:pointer; position:relative;">
-                    <img src="uploads/'. $avatar .'" style="width:44px; height:44px; border-radius:50%; object-fit:cover;">
+                    <img src="../uploads/'. $avatar .'" style="width:44px; height:44px; border-radius:50%; object-fit:cover;">
                     <div style="flex:1;">
                       <div style="font-weight:600;">'.htmlspecialchars($mechanic_name).'</div>
                       <div style="font-size:13px; color:#666;">'.$snippet.'</div>
@@ -797,8 +797,9 @@ if ($result->num_rows > 0) {
           <h2>Pay Bill</h2>
         </div>
         <div class="paybill-content">
-  <?php
+<?php
 include("db.php");
+
 if (!isset($_SESSION['customer_id'])) {
   echo "<p>Please login first.</p>";
   exit;
@@ -806,37 +807,57 @@ if (!isset($_SESSION['customer_id'])) {
 
 $customer_id = $_SESSION['customer_id'];
 
+// Fetch completed & unpaid appointments
 $sql = "SELECT a.appointment_id, s.skills AS service_name, ts.status AS track_status,
-               a.fee, m.full_name AS mechanic_name, m.mechanic_id, 
+               a.fee, m.full_name AS mechanic_name, m.mechanic_id,
                COALESCE(p.status, 'Unpaid') AS payment_status
         FROM appointments a
         JOIN track_status ts ON a.appointment_id = ts.appointment_id
         JOIN service s ON a.service_id = s.service_id
         JOIN mechanic m ON a.mechanic_id = m.mechanic_id
         LEFT JOIN payments p ON a.appointment_id = p.appointment_id
-        WHERE a.customer_id = ? 
+        WHERE a.customer_id = ?
           AND ts.status = 'Completed'
           AND (p.status = 'Unpaid' OR p.status IS NULL)";
+
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $customer_id);
 $stmt->execute();
 $res = $stmt->get_result();
 
+// Fetch platform fee & VAT
+$sq2 = "SELECT * FROM service_charge LIMIT 1";
+$result = mysqli_query($conn, $sq2);
+$row1 = mysqli_fetch_assoc($result);
+
+$platform_percent = $row1['platform_fee'];
+$vat_percent      = $row1['vat_amount'];
+
 if ($res && $res->num_rows > 0) {
   while ($row = $res->fetch_assoc()) {
-    ?>
+
+    $base_amount   = $row['fee'];
+    $platform_fee  = ($base_amount * $platform_percent) / 100;
+    $vat_amount    = ($base_amount * $vat_percent) / 100;
+    $total_amount  = $base_amount + $platform_fee + $vat_amount;
+?>
     <div class="payable-card"
          data-appointment="<?= $row['appointment_id']; ?>"
          data-service="<?= htmlspecialchars($row['service_name']); ?>"
-         data-fee="<?= $row['fee']; ?>"
+         data-base="<?= $base_amount; ?>"
+         data-fee="<?= $total_amount; ?>"
+         data-platform_fee="<?= $platform_fee; ?>"
+         data-vat_amount="<?= $vat_amount; ?>"
          data-mechanic="<?= htmlspecialchars($row['mechanic_name']); ?>"
          data-mechanicid="<?= $row['mechanic_id']; ?>">
+
       <p><strong>Service:</strong> <?= htmlspecialchars($row['service_name']); ?></p>
       <p><strong>Mechanic:</strong> <?= htmlspecialchars($row['mechanic_name']); ?></p>
-      <p><strong>Fee:</strong> BDT <?= number_format($row['fee'],2); ?></p>
+      <p><strong>Total Payable:</strong> BDT <?= number_format($total_amount,2); ?></p>
+
       <button class="btn-pay">Pay Now</button>
     </div>
-    <?php
+<?php
   }
 } else {
   echo "<p>No services pending payment.</p>";
@@ -856,17 +877,22 @@ if ($res && $res->num_rows > 0) {
     <button id="btnCancelPay">Cancel</button>
   </div>
 </div>
+
 <script>
 $(function(){
   let selected = {};
 
   $(".btn-pay").on("click", function(){
     let card = $(this).closest(".payable-card");
-    selected.appointment = card.data("appointment");
-    selected.service = card.data("service");
-    selected.fee = card.data("fee");
-    selected.mechanic = card.data("mechanic");
-    selected.mechanicid = card.data("mechanicid");
+
+    selected.appointment    = card.data("appointment");
+    selected.service        = card.data("service");
+    selected.base           = card.data("base");
+    selected.fee            = card.data("fee");
+    selected.platform_fee   = card.data("platform_fee");
+    selected.vat_amount     = card.data("vat_amount");
+    selected.mechanic       = card.data("mechanic");
+    selected.mechanicid     = card.data("mechanicid");
 
     $("#modalService").text("Service: " + selected.service);
     $("#modalMechanic").text("Mechanic: " + selected.mechanic);
@@ -881,15 +907,22 @@ $(function(){
 
   $("#btnProceedPay").on("click", function(){
     const customer_id = <?= json_encode($customer_id) ?>;
+
     const url = `pay_gateway.php?appointment_id=${selected.appointment}`
               + `&customer_id=${customer_id}`
               + `&mechanic_id=${selected.mechanicid}`
-              + `&amount=${selected.fee}`;
+              + `&amount=${selected.base}`
+              + `&total=${selected.fee}`
+              + `&platform_fee=${selected.platform_fee}`
+              + `&vat_amount=${selected.vat_amount}`;
+
     window.open(url, "_blank");
     $("#paymentModal").hide();
   });
 });
 </script>
+
+
 
 
       </div>
