@@ -755,51 +755,84 @@ $("#chargeForm").on("submit", function(e){
           <h2>User Support Center</h2>
         </div>
         <div class="support-content">
-        <table class="ticket-table">
-      <thead>
-        <tr>
-          <th>Ticket ID</th>
-          <th>User</th>
-          <th>Subject</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>#TCK-101</td>
-          <td>Hasan Karim</td>
-          <td>Payment not processing</td>
-          <td><span class="status open">Open</span></td>
-          <td>
-            <button class="btn view">View</button>
-            <button class="btn resolve">Mark Resolved</button>
-          </td>
-        </tr>
-        <tr>
-          <td>#TCK-102</td>
-          <td>Tania Akter</td>
-          <td>Technician arrived late</td>
-          <td><span class="status pending">Pending</span></td>
-          <td>
-            <button class="btn view">View</button>
-            <button class="btn resolve">Mark Resolved</button>
-          </td>
-        </tr>
-        <tr>
-          <td>#TCK-103</td>
-          <td>Rahim Uddin</td>
-          <td>Unable to login</td>
-          <td><span class="status resolved">Resolved</span></td>
-          <td>
-            <button class="btn view">View</button>
-            <button class="btn resolve" disabled>Resolved</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+<table class="ticket-table">
+<thead>
+<tr>
+  <th>Ticket ID</th>
+  <th>User</th>
+  <th>Subject</th>
+  <th>Status</th>
+  <th>Actions</th>
+</tr>
+</thead>
+<tbody id="ticketBody">
 
-            </div>
+<?php
+include("config.php");
+$res = $conn->query("SELECT * FROM support_tickets ORDER BY ticket_id DESC");
+
+if($res->num_rows > 0){
+    while($row = $res->fetch_assoc()){
+        echo "
+        <tr>
+          <td>#TCK-{$row['ticket_id']}</td>
+          <td>{$row['user_name']} ({$row['user_type']})</td>
+          <td>{$row['subject']}</td>
+          <td><span class='status {$row['status']}'>" . $row['status'] . "</span></td>
+          <td>
+            <button class='btn view' data-id='{$row['ticket_id']}'>View</button>
+            <button class='btn resolve' data-id='{$row['ticket_id']}' data-type='{$row['user_type']}' data-user='{$row['user_id']}'
+                " . ($row['status']=='Resolved'?'disabled':''). ">
+                Mark Resolved
+            </button>
+          </td>
+        </tr>
+        ";
+    }
+} else {
+    echo "<tr><td colspan='5'>No support tickets found.</td></tr>";
+}
+?>
+</tbody>
+</table>
+</div>
+<!-- POPUP -->
+<div id="ticketPopup" style="
+    display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+    background:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
+    <div style="background:white; padding:20px; width:450px; border-radius:10px;">
+        <h3>Ticket Details</h3>
+        <p id="popupContent"></p>
+        <button onclick="$('#ticketPopup').hide()" style=" cursor:pointer; border:none; color:white; background-color: red; border-radius:8px; padding: 5px 10px;">Close</button>
+    </div>
+</div>
+
+<script>
+$(document).on("click", ".view", function(){
+    let id = $(this).data("id");
+
+    $.post("ticket_action.php", { action:"view", id:id }, function(res){
+        $("#popupContent").html(res);
+        $("#ticketPopup").css("display", "flex");
+    });
+});
+
+$(document).on("click", ".resolve", function(){
+    let id = $(this).data("id");
+    let type = $(this).data("type");
+    let user = $(this).data("user");
+
+    $.post("ticket_action.php", { action:"resolve", id:id, user_type:type, user_id:user }, function(res){
+        if(res.trim() === "OK"){
+            alert("Ticket marked resolved & notification sent!");
+            location.reload();
+        } else {
+            alert("Error: " + res);
+        }
+    });
+});
+</script>
+
         </div>
       <div class="tabPanel">
         <script>

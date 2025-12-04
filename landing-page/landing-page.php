@@ -6,10 +6,8 @@
 <title>Repair360 - Professional Multi-Service Repair Platform</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <style>
-/* ---------------- GOOGLE FONTS ---------------- */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
-/* ---------------- RESET ---------------- */
 *{
   font-family: "Poppins", sans-serif;
   margin:0; padding:0;
@@ -19,8 +17,6 @@ body{
   background: linear-gradient(to top, #ffffff 0%, #93c0ed 100%);
   overflow-x:hidden;
 }
-
-/* ---------------- PRELOADER ---------------- */
 .preloader{
   position:fixed;
   top:50%; left:50%;
@@ -52,7 +48,6 @@ body{
   to{width:100%;}
 }
 
-/* ---------------- NAVBAR ---------------- */
 .header{
   position:fixed;
   width:92%;
@@ -97,8 +92,6 @@ body{
 .header .right-nav li:hover a{
   color:#ffffff;
 }
-
-/* DROPDOWN */
 .dropdown{
     position:relative;
 
@@ -125,8 +118,6 @@ body{
 .dropdown:hover .dropdown-content{
   display:block;
 }
-
-/* ---------------- HERO SECTION ---------------- */
 .hero{
   margin-top:150px;
   padding:70px 10%;
@@ -161,8 +152,6 @@ body{
   text-shadow:0 0 10px red;
   font-size:20px;
 }
-
-/* ---------------- SERVICE SECTIONS ---------------- */
 .section-title{
   text-align:center;
   margin-top:80px;
@@ -213,8 +202,6 @@ body{
   box-shadow:0 0 15px #ff4d4d;
   transform:translateY(-3px);
 }
-
-/* ---------------- FOOTER ---------------- */
 .footer{
   background:white;
   margin-top:100px;
@@ -261,8 +248,6 @@ body{
   border-top:1px solid #ccc;
   font-size:14px;
 }
-
-/* ---------------- RESPONSIVE ---------------- */
 @media(max-width:900px){
   .hero{
     flex-direction:column;
@@ -280,14 +265,9 @@ body{
 </head>
 
 <body>
-
-<!-- PRELOADER -->
 <div class="preloader" id="preloader">Repair - 360</div>
 
-<!-- MAIN CONTENT -->
 <div id="content" style="display:none;">
-
-  <!-- NAVBAR -->
   <div class="header">
     <div class="left-nav">
       <img src="img/repairlogo.png">
@@ -318,13 +298,11 @@ body{
           </div>
         </li>
 
-        <li><a href="#">Help Center</a></li>
+        <li><a href="support.php">Help Center</a></li>
         <li><a href="about.html">About Us</a></li>
       </ul>
     </div>
   </div>
-
-  <!-- HERO -->
   <section class="hero">
     <div class="hero-text">
       <p><strong id="re-name">Welcome to Repair - 360</strong><br><br>
@@ -387,8 +365,7 @@ body{
         <h3>Quick Links</h3>
         <ul>
           <li><a href="about.html">About Us</a></li>
-          <li><a href="#">Help Center</a></li>
-          <li><a href="#">Developers</a></li>
+          <li><a href="support.php">Help Center</a></li>
         </ul>
       </div>
 

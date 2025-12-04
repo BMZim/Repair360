@@ -165,10 +165,6 @@ function markAsRead(){
       <div class="tabPanel" id="tab1">
         <div class="job-head">
                 <h2>Service List</h2>
-                <form class="search-bar">
-                    <input type="text" placeholder="Search a Service" />
-                    <button type="submit">&#128269;</button>
-                </form>
             
         </div>
         <div class="job-content">
@@ -893,7 +889,8 @@ $('#mchat-input').on('keypress', function (e) {
               $sql_platform_p = "select * from platform_charge where mechanic_id = '$mechanic_id'";
               $pp = mysqli_query($con, $sql_platform_p);
               $rowP = mysqli_fetch_assoc($pp);
-              $total_pp = $rowP['platform_fee'];
+              $total_pp = $rowP && $rowP['platform_fee'] !== null ? $rowP['platform_fee'] : 0;
+
 
 
               ?>
@@ -910,10 +907,35 @@ $('#mchat-input').on('keypress', function (e) {
         </div>
         <div class="summary-box">
             <h3>Pending Platform Fee</h3>
-            <p>৳ <?= number_format($total_pp, 2); ?></p>
-            <a href="platform_payment.php?mechanic_id=<?= $mechanic_id; ?>" 
-                   target="_blank" 
-                   class="invoice-btn">Pay Now</a>
+            <p id="pending_fee">৳ <?= number_format($total_pp, 2); ?></p>
+
+              <script>
+              function toggleLink() {
+                  let text = document.getElementById("pending_fee").textContent;
+
+                  // Remove currency symbol and spaces
+                  let amount = parseFloat(text.replace(/[^\d.-]/g, ""));
+
+                  const link = document.getElementById("pf");
+
+                  if (amount === 0) {
+                      link.style.display = "none";
+                  } else {
+                      link.style.display = "inline-block";
+                  }
+              }
+
+              // Run on page load
+              window.onload = toggleLink;
+              </script>
+
+              <a id="pf" 
+                href="platform_payment.php?mechanic_id=<?= $mechanic_id; ?>" 
+                target="_blank" 
+                class="invoice-btn">
+                Pay Now
+              </a>
+
         </div>
     </div>
 
@@ -923,7 +945,10 @@ $('#mchat-input').on('keypress', function (e) {
         <tr>
             <th>Date</th>
             <th>Service</th>
-            <th>Amount</th>
+            <th>Service Bill</th>
+            <th>VAT</th>
+            <th>Platform Fee</th>
+            <th>Total</th>
             <th>Status</th>
             <th>Action</th> <!-- NEW -->
         </tr>
@@ -953,15 +978,31 @@ $stmt->bind_param("i", $mechanic_id);
 $stmt->execute();
 $result = $stmt->get_result();
 
+// Fetch platform fee & VAT
+$sq2 = "SELECT * FROM service_charge LIMIT 1";
+$result1 = mysqli_query($con, $sq2);
+$row1 = mysqli_fetch_assoc($result1);
+
+$platform_percent = $row1['platform_fee'];
+$vat_percent      = $row1['vat_amount'];
+
 if ($result->num_rows > 0) {
 
     while ($row = $result->fetch_assoc()) {
         $status = strtolower($row['status']); 
+
+        $base_amount   = $row['amount'];
+    $platform_fee  = ($base_amount * $platform_percent) / 100;
+    $vat_amount    = ($base_amount * $vat_percent) / 100;
+    $total_amount  = $base_amount + $platform_fee + $vat_amount;
 ?>
         <tr>
             <td><?= htmlspecialchars($row['appointment_date']); ?></td>
             <td><?= htmlspecialchars($row['service_name']); ?></td>
             <td>৳ <?= number_format($row['amount'], 2); ?></td>
+            <td>৳ <?= number_format($vat_amount, 2); ?></td>
+            <td>৳ <?= number_format($platform_fee, 2); ?></td>
+            <td>৳ <?= number_format($total_amount, 2); ?></td>
             <td><span class="badge <?= $status ?>"><?= ucfirst($row['status']) ?></span></td>
 
             <!-- NEW INVOICE BUTTON -->

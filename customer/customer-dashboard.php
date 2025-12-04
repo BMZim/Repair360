@@ -158,14 +158,30 @@ function markAsRead(){
   
     <div class="item3">
       <div class="tabPanel" id="tab1">
-        <div class="booking-head">
-                <h2>Find a Service</h2>
-                <form class="search-bar">
-                    <input type="text" placeholder="Search a Service" />
-                    <button type="submit">&#128269;</button>
-                </form>
-            
-        </div>
+            <div class="booking-head">
+        <h2>Find a Service</h2>
+        <form class="search-bar" onsubmit="return false;">
+            <input type="text" id="searchInput" placeholder="Search by shop or service..." />
+            <button type="submit">&#128269;</button>
+        </form>
+    </div>
+
+        <script>
+        document.getElementById("searchInput").addEventListener("keyup", function () {
+            let query = this.value;
+
+            fetch("search_service.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: "query=" + encodeURIComponent(query)
+            })
+            .then(res => res.text())
+            .then(data => {
+                document.querySelector(".service-cards").innerHTML = data;
+            });
+        });
+        </script>
+
         <div class="booking-content">
             <div class="service-cards">
 <?php
@@ -726,6 +742,7 @@ SELECT
     s.service_id,
     m.full_name AS mechanic_name,
     p.payment_id,
+    p.total,
     COALESCE(p.status, 'Unpaid') AS payment_status,
     ts.status AS track_status
 FROM appointments a
@@ -750,7 +767,8 @@ $result = $stmt->get_result();
             <th>Service ID</th>
             <th>Service</th>
             <th>Date</th>
-            <th>Amount</th>
+            <th>Service Bill</th>
+            <th>Total with VAT</th>
             <th>Status</th>
             <th>Invoice</th>
         </tr>
@@ -770,6 +788,7 @@ if ($result->num_rows > 0) {
             <td>{$row['service_name']}</td>
             <td>{$row['appointment_date']}</td>
             <td>৳ " . number_format($row['amount'], 2) . "</td>
+            <td>৳ " . number_format($row['total'], 2) . "</td>
             <td class='{$statusClass}'>" . ucfirst($row['payment_status']) . "</td>
             <td>
                 <a href='invoice_customer.php?pid={$row['payment_id']}' target='_blank' class='invoice-btn'>
@@ -853,6 +872,9 @@ if ($res && $res->num_rows > 0) {
 
       <p><strong>Service:</strong> <?= htmlspecialchars($row['service_name']); ?></p>
       <p><strong>Mechanic:</strong> <?= htmlspecialchars($row['mechanic_name']); ?></p>
+      <p><strong>Service Bill:</strong> BDT <?= number_format($base_amount,2); ?></p>
+      <p><strong>VAT (15%):</strong> BDT <?= number_format($vat_amount,2); ?></p>
+      <p><strong>Platform Fee (2%):</strong> BDT <?= number_format($platform_fee,2); ?></p>
       <p><strong>Total Payable:</strong> BDT <?= number_format($total_amount,2); ?></p>
 
       <button class="btn-pay">Pay Now</button>

@@ -76,15 +76,29 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['pay_now'])) {
       if(mysqli_num_rows($result)>0){
         $row = mysqli_fetch_assoc($result);
         $previous_p_f = $row['platform_fee'];
-        $new_p_f = $previous_p_f + $platform_fee;
+        $new_p_f = $previous_p_f + $platform_fee + $platform_fee;
         $sql1 = "update platform_charge set platform_fee ='$new_p_f'";
-        $result1 = mysqli_query($conn, $sql1);
+        mysqli_query($conn, $sql1);
+        $message1= "Your payment for the service bill has been received.";
+        $message2= "The service bill has been delivered to you.";
+        $sql4 = "INSERT INTO customer_notifications (customer_id, message) VALUES ('$customer_id', '$message1')";
+        mysqli_query($conn, $sql4);
+        $sql6 = "INSERT INTO mechanic_notifications (mechanic_id, message) VALUES ('$mechanic_id', '$message2')";
+        mysqli_query($conn, $sql6);
+        
       }else{
         $sql2 = "insert into platform_charge values('', '$mechanic_id', '0', '', '', '')";
         $result2 = mysqli_query($conn, $sql2);
         if($result2){
-          $sql3 = "update platform_charge set platform_fee ='$platform_fee'";
-        $result3 = mysqli_query($conn, $sql3);
+          $total_p = $platform_fee + $platform_fee;
+          $sql3 = "update platform_charge set platform_fee ='$total_p'";
+          mysqli_query($conn, $sql3);
+          $message3= "Your payment for the service bill has been received.";
+          $message4= "The service bill has been delivered to you.";
+          $sql5 = "INSERT INTO customer_notifications (customer_id, message) VALUES ('$customer_id', '$message3')";
+          mysqli_query($conn, $sql5);
+          $sql7 = "INSERT INTO mechanic_notifications (mechanic_id, message) VALUES ('$mechanic_id', '$message4')";
+        mysqli_query($conn, $sql7);
         }
       }
         $payment_success = true;

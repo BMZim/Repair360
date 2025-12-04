@@ -5,7 +5,7 @@ include("config.php");
 $bookingQuery = $conn->query("
     SELECT COUNT(*) AS total 
     FROM appointments 
-    WHERE status = 'Confirmed'
+    WHERE status = 'Confirmed' OR status = 'Completed'
 ");
 $bookingData = $bookingQuery->fetch_assoc();
 $totalBookings = $bookingData['total'] ?? 0;
@@ -21,8 +21,8 @@ $totalUsers = $userData['users'] ?? 0;
 
 // Total Revenue
 $revenueQuery = $conn->query("
-    SELECT SUM(platform_fee) AS revenue 
-    FROM platform_charge
+    SELECT SUM(amount) AS revenue 
+    FROM revenue
 ");
 $revenueData = $revenueQuery->fetch_assoc();
 $totalRevenue = $revenueData['revenue'] ?? 0;
@@ -46,8 +46,8 @@ while ($row = $monthlyBookingQuery->fetch_assoc()) {
 $monthlyRevenueQuery = $conn->query("
     SELECT 
         DATE_FORMAT(created_at, '%Y-%m') AS month,
-        SUM(platform_fee) AS revenue
-    FROM platform_charge
+        SUM(amount) AS revenue
+    FROM revenue
     GROUP BY month
     ORDER BY month
 ");

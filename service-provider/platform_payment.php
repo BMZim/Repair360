@@ -56,6 +56,8 @@ if (isset($_POST['pay_now'])) {
     $stmt2->bind_param("dssi", $remaining_fee, $method, $transaction_id, $mechanic_id);
 
     if ($stmt2->execute()) {
+        $sql = "INSERT INTO revenue(amount, mechanic_id, transaction_id, method) VALUES ('$new_pay', '$mechanic_id', '$transaction_id', '$method')";
+        mysqli_query($con, $sql);
         $payment_success = true;
     }
 
