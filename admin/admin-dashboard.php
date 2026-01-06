@@ -837,7 +837,7 @@ $(document).on("click", ".resolve", function(){
       <div class="tabPanel">
         <script>
            function logOut(){
-            window.location.href = "#";
+            window.location.href = "admin-logout.php";
            }
         </script>
       </div>
