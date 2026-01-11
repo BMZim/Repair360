@@ -38,6 +38,7 @@ if (isset($_POST['submit'])) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Customer Login</title>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     * {
       margin: 0;
@@ -315,19 +316,8 @@ if (isset($_POST['submit'])) {
         <input type="password" name="password" id="password" placeholder="Enter your password" required />
         <span class="toggle-password" onclick="togglePassword()">👁️</span>
       </div>
-      <?php 
-                if(isset($_GET['error'])){  
-                    echo '<p style="color:red;">'.$_GET['error'].'</p>';
-                }
 
-            ?>
-
-      <div class="checkbox-container">
-        <input type="checkbox" id="remember-me" name="remember-me" />
-        <label for="remember-me">Remember Me</label>
-      </div>
-
-      <a href="#" class="forgot-password">Forgot Password?</a>
+      <a href="forgotPass/forgot_password.php" class="forgot-password">Forgot Password?</a>
       <button type="submit" name="submit" id="submit" value="submit" class="btn">Sign In</button>
     </form>
 
@@ -356,6 +346,18 @@ if (isset($_POST['submit'])) {
 
     }
   </script>
+  <?php if (isset($_GET['error'])): ?>
+<script>
+Swal.fire({
+    icon: 'error',
+    title: 'Login Failed',
+    text: '<?php echo htmlspecialchars($_GET['error']); ?>',
+    confirmButtonText: 'Try Again',
+    allowOutsideClick: false
+});
+</script>
+<?php endif; ?>
+
 </body>
 </html>
 

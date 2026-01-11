@@ -2,8 +2,8 @@
 session_start();
 include('connection.php');
 
-$mechanic_id = "252780";
-$mechanic_type = "Home";
+$mechanic_id = $_GET['id'] ?? null; 
+$mechanic_type = $_GET['type'] ?? null;
 
 if (!$mechanic_id || !$mechanic_type) {
     echo "<h3 style='color:red;text-align:center;'>Mechanic ID or Type not found in session!</h3>";

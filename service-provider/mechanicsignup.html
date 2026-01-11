@@ -4,118 +4,101 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mechanic Sign Up</title>
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+   <!-- Fonts & Libraries -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   <style>
-    body {
+    * {
+      box-sizing: border-box;
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: url('img/LS.jpeg') no-repeat center center fixed;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)),
+        url('img/LS.jpeg') no-repeat center center fixed;
       background-size: cover;
+      padding: 30px 15px;
     }
 
     .form-container {
-      background-color: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(15px);
-      border-radius: 20px;
-      padding: 30px;
-      max-width: 900px;
-      margin: 30px auto;
-      color: white;
+      max-width: 1000px;
+      margin: auto;
+      background: #111;
+      border-radius: 18px;
+      padding: 35px 40px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+      border: 1px solid rgba(255,255,255,0.08);
       display: flex;
       flex-wrap: wrap;
-      gap: 30px;
+      gap: 25px;
+      color: #fff;
     }
 
     .form-container h2 {
       width: 100%;
       text-align: center;
-      font-size: 36px;
+      font-size: 34px;
+      margin-bottom: 5px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .form-container::after {
+      content: "Professional Mechanic Registration";
+      width: 100%;
+      text-align: center;
+      color: #aaa;
+      font-size: 14px;
       margin-bottom: 20px;
     }
 
     .form-group {
-      flex: 1 1 40%;
+      flex: 1 1 45%;
       display: flex;
       flex-direction: column;
-    }
-
-    .form-group textarea {
-      height: 100px;
-      resize: none;
-    }
-
-    label {
-      margin-bottom: 8px;
-      font-weight: 600;
-    }
-
-    input, select, textarea {
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 10px;
-      border: none;
-    }
-
-    .gender-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
     }
 
     .full-width {
       flex: 1 1 100%;
     }
-    .email-container {
-      display: flex;
-      gap: 8px;
-    }
-    .email-container input {
-      flex: 1;
-    }
-    .email-container button {
-      background-color: #007bff;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      padding: 0 12px;
-      cursor: pointer;
-    }
-    .email-container button:hover {
-      opacity: 0.9;
+
+    label {
+      font-size: 14px;
+      margin-bottom: 8px;
+      color: #ccc;
+      font-weight: 500;
     }
 
-    .button-group {
-      display: flex;
-      justify-content: space-between;
-      gap: 20px;
-      width: 100%;
-      margin-top: 20px;
-    }
-
-    button {
-      padding: 10px 30px;
-      font-size: 16px;
+    input, select, textarea {
+      padding: 12px 14px;
+      font-size: 15px;
       border-radius: 10px;
-      border: none;
-      cursor: pointer;
-    }
-    
-
-    #submit {
-      background-color: #28a745;
-      color: white;
-    }
-    #submit:hover{
-      background-color: #5fdf7d;
+      border: 1px solid #333;
+      background: #1a1a1a;
+      color: #fff;
+      transition: all 0.3s ease;
     }
 
-    #reset {
-      background-color: #ddd;
-      color: black;
+    textarea {
+      resize: none;
+      height: 110px;
     }
-    #reset:hover{
-      background-color: #a0aaa2;
+
+    input::placeholder, textarea::placeholder {
+      color: #777;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #ff9800;
+      box-shadow: 0 0 0 2px rgba(255,152,0,0.25);
+      background: #1f1f1f;
     }
 
     .password-wrapper {
@@ -126,12 +109,78 @@
 
     .eye-icon {
       cursor: pointer;
+      font-size: 18px;
+      color: #ff9800;
+      user-select: none;
+    }
+
+    .gender-group {
+      display: flex;
+      gap: 15px;
+      margin-top: 5px;
+    }
+
+    .gender-group label {
+      font-weight: 400;
+      color: #ddd;
+    }
+
+    .button-group {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      margin-top: 25px;
+    }
+
+    #btnSubmit {
+      flex: 1;
+      background: linear-gradient(135deg, #ff9800, #ff5722);
+      color: #000;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: 12px;
+      padding: 14px;
+      cursor: pointer;
+      border: none;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    #btnSubmit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(255,152,0,0.4);
+    }
+
+    #reset {
+      flex: 1;
+      background: #2a2a2a;
+      color: #fff;
+      border-radius: 12px;
+      padding: 14px;
+      cursor: pointer;
+      border: 1px solid #444;
+    }
+
+    #reset:hover {
+      background: #333;
+    }
+
+    #otpGroup small {
+      margin-top: 5px;
+      font-size: 13px;
+      color: #ff4d4d;
+    }
+
+    @media (max-width: 768px) {
+      .form-group {
+        flex: 1 1 100%;
+      }
     }
   </style>
 </head>
 
 <body>
-  <form class="form-container" method="POST" >
+  <form id="signupForm" class="form-container" method="POST" >
     <h2>Mechanic Sign Up</h2>
 
     <div class="form-group">
@@ -146,17 +195,8 @@
 
     <div class="form-group">
         <label for="email">Email</label>
-        <div class="email-container">
           <input type="email" id="email" name="email" placeholder="example@domain.com" required>
-          <button type="button" id="sendOtpBtn">Send OTP</button>
-        </div>
-      </div>
-
-      <!-- OTP Input (hidden initially) -->
-      <div class="form-group" id="otpGroup" style="display: none;">
-        <label for="otpInput">Enter OTP</label>
-        <input type="number" id="otpInput" placeholder="Enter OTP" required>
-        <small id="otpMessage" style="color:red;"></small>
+      
       </div>
 
     <div class="form-group">
@@ -233,181 +273,126 @@
 
     <div class="button-group">
       <button type="reset" id="reset">Reset</button>
-      <button type="submit" value="submit" id="submit" name="submit">Submit</button>
+      <button type="submit" value="submit" id="btnSubmit" name="btnSubmit">Submit</button>
     </div>
   </form>
 
-<script src="https://smtpjs.com/v3/smtp.js"></script>
   <script>
 $(document).ready(function () {
 
-    // ---------- 1. Generate Mechanic ID ----------
-    let counter = Math.floor(Math.random() * 9999) + 1;
-    $('#mechanicid').val('25' + String(counter).padStart(4, '0'));
+    // Generate mechanic ID
+    let rand = Math.floor(Math.random() * 9000) + 1000;
+    $('#mechanicid').val('25' + rand);
 
-    // ---------- 2. Toggle Password ----------
+    // Show / hide password
     $('.eye-icon').click(function () {
-        const pwd = $('#password');
-        pwd.attr('type', pwd.attr('type') === 'password' ? 'text' : 'password');
+        const pass = $('#password');
+        pass.attr('type', pass.attr('type') === 'password' ? 'text' : 'password');
     });
 
-    // ---------- 3. OTP Sending ----------
-    let generatedOTP = null;
-
-    $('#sendOtpBtn').click(function () {
-        const email = $('#email').val().trim();
-        if (!email) {
-            Swal.fire({ icon: "error", title: "Error", text: "Please enter your email first!" });
-            return;
-        }
-
-        generatedOTP = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
-        $('#otpGroup').show();
-
-        // Send email using SMTPJS
-        Email.send({
-            SecureToken: "1586ed89-b601-4653-bfcf-7c021b711518",
-            To: email,
-            From: "shafinrubaer@gmail.com",
-            Subject: "Email Verification",
-            Body: "Your OTP is: " + generatedOTP
-        }).then(message => {
-            if (message === "OK") {
-                Swal.fire({ title: "OTP Sent!", text: "Check your email inbox.", icon: "success", timer: 1500 });
-            } else {
-              alert(generatedOTP);
-                Swal.fire({ icon: "error", title: "Error", text: "Failed to send OTP. Try again." });
-            }
-        });
-    });
-
-    
-    // ---------- 4. Form Submission ----------
-    $('#submit').click(function (e) {
+    $('#btnSubmit').click(function (e) {
         e.preventDefault();
 
-        
-        const enteredOTP = $('#otpInput').val().trim();
-        if (!enteredOTP) {
-          Swal.fire({
-                            icon: "error",
-                            title: "Oops...",
-                            text: "Please verify your email before proceeding!!",
-                            footer: 'Not Verified Email'
-                            });
-            $('#otpMessage').text('Please verify your email before proceeding!!');
-            return;
+        // Collect values
+        const name = $('#name').val().trim();
+        const email = $('#email').val().trim();
+        const password = $('#password').val();
+        const dob = $('#dob').val();
+        const phone = $('input[name="phone"]').val().trim();
+        const nid = $('#nid').val().trim();
+        const division = $('select[name="division"]').val();
+        const city = $('#city').val().trim();
+        const mechanicType = $('#mechanicType').val();
+        const experience = $('#experience').val();
+        const address = $('#address').val().trim();
+
+        // Name
+        if (name.length < 3) {
+            return Swal.fire("Invalid Name", "Name must be at least 3 characters.", "error");
         }
 
-        if (!generatedOTP || parseInt(enteredOTP) !== generatedOTP) {
-            Swal.fire({
-                            icon: "error",
-                            title: "Oops...",
-                            text: "Invalid OTP. Please try again.",
-                            footer: 'Wrong OTP'
-                            });
-            $('#otpMessage').text('Invalid OTP. Please try again.');
-            return;
+        // Email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return Swal.fire("Invalid Email", "Enter a valid email address.", "error");
         }
 
-        // Check form validity
-        
+        // Password
+        if (password.length < 8 || !/\d/.test(password)) {
+            return Swal.fire(
+                "Weak Password",
+                "Password must be at least 8 characters and contain a number.",
+                "error"
+            );
+        }
 
-        // Age validation
-        const dob = new Date($('#dob').val());
+        // DOB & Age
+        if (!dob) {
+            return Swal.fire("DOB Required", "Please select your date of birth.", "error");
+        }
+
+        const birthDate = new Date(dob);
         const today = new Date();
-        let age = today.getFullYear() - dob.getFullYear();
-        const monthDiff = today.getMonth() - dob.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) age--;
+        let age = today.getFullYear() - birthDate.getFullYear();
+        if (today < new Date(birthDate.setFullYear(birthDate.getFullYear() + age))) age--;
+
         if (age < 18) {
-            Swal.fire({ icon: "error", title: "Oops...", text: "You must be at least 18 years old to register." });
-            return;
+            return Swal.fire("Age Restriction", "You must be at least 18 years old.", "error");
         }
 
-        // Collect form data
-                var name = $('#name').val();
-                var mecid = $('#mechanicid').val();
-                var email = $('#email').val();
-                var phone= $('input[name="phone"]').val().trim();
-                var password = $('#password').val();
-                var address = $('#address').val();
-                var date = $('#dob').val();
-                var experience = $('#experience').val();
-                var city = $('#city').val();
-                var division= $('select[name="division"]').val();
-                var type = $('#mechanicType').val();
-                var gender= $('input[name="gender"]:checked').val()
-                var nid = $('#nid').val();
-                if (!this.form.checkValidity()) {
-            Swal.fire({ icon: "error", title: "Error", text: "Please fill all required fields." });
-            return;
+        // Phone (Bangladesh)
+        const phoneRegex = /^(?:\+88|01)?[3-9]\d{8}$/;
+        if (!phoneRegex.test(phone)) {
+            return Swal.fire("Invalid Phone", "Enter a valid Bangladeshi phone number.", "error");
         }
 
-				$.ajax({
-					type: 'POST',
-					url: 'mechanicsignup.php',
-					data: {
-                            name: name,
-                            mecid: mecid,
-                            email: email,
-                            phone: phone,
-                            password: password,
-                            address: address,
-                            date: date,
-                            experience: experience,
-                            city: city,
-                            division: division,
-                            type: type,
-                            gender: gender,
-                            nid: nid,
-                },
-					success: function(data){
+        // NID
+        if (nid.length < 10 || nid.length > 12) {
+            return Swal.fire("Invalid NID", "NID must be 10–17 digits.", "error");
+        }
 
-                        if(data.trim() ==  "0"){
-                            Swal.fire({
-                                title: "Good job!",
-                                text: "SignUp Successfull",
-                                icon: "success"
-                                }).then(()=>{
-                                    var mectype = $('#mechanicType').val();
-                                    var id = $('#mechanicid').val();
+        // Division
+        if (!division) {
+            return Swal.fire("Division Required", "Please select your division.", "error");
+        }
 
-                                    if (type && id) {
-                                        window.location.href = `skills.php?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`;
-                                    } else {
-                                        Swal.fire({ icon: "error", title: "Error", text: "Mechanic type or ID missing!" });
-                                    }
-                                });
-                        }else if(data.trim() ==  "1"){  
-                            Swal.fire({
-                            icon: "error",
-                            title: "Oops...",
-                            text: "Something went wrong!",
-                            footer: 'Email already exists!!'
-                            });
-                        }else if(data.trim() ==  "2"){
-                            Swal.fire({
-                            icon: "error",
-                            title: "Oops...",
-                            text: "Something went wrong!",
-                            footer: 'NID already exists!!'
-                            });
-                        }else{
-                            alert(data);
-                            Swal.fire({
-                            icon: "error",
-                            title: "Oops...",
-                            text: "Something went wrong!",
-                            footer: 'Contact with support center'
-                            });
-                        }
-                        
-							
-					}
-				});
+        // City
+        if (city.length < 2) {
+            return Swal.fire("Invalid City", "Please enter a valid city name.", "error");
+        }
+
+        // Mechanic Type
+        if (!mechanicType) {
+            return Swal.fire("Mechanic Type", "Please select mechanic type.", "error");
+        }
+
+        // Experience
+        if (experience < 0) {
+            return Swal.fire("Invalid Experience", "Experience cannot be negative.", "error");
+        }
+
+        // Address
+        if (address.length < 10) {
+            return Swal.fire("Invalid Address", "Address must be at least 10 characters.", "error");
+        }
+
+        // ✅ All validations passed
+Swal.fire({
+    title: "Submitting",
+    text: "Please wait...",
+    icon: "success",
+    timer: 1200,
+    showConfirmButton: false
+}).then(() => {
+    const form = document.getElementById('signupForm');
+    form.action = 'otp_verify.php';
+    form.submit(); // This will now work because the button is no longer named "submit"
+});
+
     });
 });
 </script>
+
 
 </body>
 </html>
